@@ -66,7 +66,8 @@ Only company with **merchant KYC + credit rail + GST infrastructure + travel inv
 - Has Paytm Business Credit (₹50K limit), uses WhatsApp heavily
 - **Pain:** *"I book on Cleartrip, then manually type invoice details into Excel for my accountant. It's annoying and I make mistakes."*
 
-#### Quantified Pain Points (From 20 Merchant Interviews)
+#### #### Quantified Pain Points (Synthesised from public sources + hypothetical primary research)
+> *Methodology note: Pain point estimates below are extrapolated from NASSCOM SMB digitisation reports, Paytm investor presentations (FY24), and hypothetical interviews modelled on semi-urban merchant archetypes in Tier-2 cities. Figures are directional, not statistically validated.*)
 
 | Pain Point | Current State | Impact |
 |------------|---------------|---------|
