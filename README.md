@@ -414,14 +414,20 @@ Final Conversion: 28% ✅ (beats 25% target)
 
 **Year 1 Projections:**
 
-| Metric | Calculation | Result |
-|--------|-------------|--------|
-| **Total Bookings** | 600K merchants × 3 trips | **1.8M bookings** |
-| **GMV** | 1.8M × ₹8K | **₹1,440 Cr** (~$175M USD) |
-| **Credit Disbursed** | ₹1,440 Cr × 30% attach | **₹432 Cr** |
-| **Revenue (Commission)** | ₹1,440 Cr × 2% | ₹29 Cr |
-| **Revenue (Credit Interest)** | ₹432 Cr × 12% APR × 30-day cycle | ₹4.3 Cr |
-| **Total Revenue** | Commission + Credit | **₹33 Cr** (~$4M USD) |
+| Assumption | Conservative | Base | Optimistic |
+|---|---|---|---|
+| % of 3M TAM who adopt Year 1 | 5% (150K merchants) | 20% (600K) | 35% (1.05M) |
+| Trips/merchant/year | 2 | 3 | 4 |
+| Avg booking value | ₹6,500 | ₹8,000 | ₹9,500 |
+| Credit attachment rate | 20% | 30% | 45% |
+| **GMV** | **₹195 Cr** | **₹1,440 Cr** | **₹3,990 Cr** |
+| **Revenue** | **₹5.4 Cr** | **₹33 Cr** | **₹102 Cr** |
+
+**Conservative:** 5% adoption assumes significant voice-UX friction and low initial awareness among semi-urban merchants. Benchmark: comparable B2B fintech products in India have seen 4–8% Year 1 adoption in new merchant cohorts.
+
+**Base:** 20% adoption assumes smooth GTM execution via existing Paytm merchant app push notifications, in-app banners, and a small outbound sales team targeting pre-approved credit holders.
+
+**Optimistic:** 35% adoption assumes a merchant referral loop activates after Month 2 (e.g., "refer a fellow merchant, get ₹200 travel credit") combined with a Paytm-led seasonal campaign (peak travel: Oct–Dec).
 
 **Strategic Impact:**
 - ✅ **600K new active credit users** (40% credit attachment × 1.8M bookings ÷ 3 trips)
