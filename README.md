@@ -545,9 +545,9 @@ For a **Senior AI Product Manager role** where travel and fintech expertise inte
 
 ### Connect
 
-**Portfolio:** [github.com/yourusername](https://github.com/yourusername)  
-**LinkedIn:** [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)  
-**Email:** your.email@example.com
+**Portfolio:** [Click here](https://prernaaagarwal.framer.website/)  
+**LinkedIn:** [Click here](https://www.linkedin.com/in/prernaaagarwal/)  
+**Email:** agarwalprerna19@gmail.com
 
 ---
 
