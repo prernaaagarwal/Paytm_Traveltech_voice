@@ -54,17 +54,21 @@ Only company with **merchant KYC + credit rail + GST infrastructure + travel inv
 
 #### Who Are We Serving?
 
-**Target Persona 1: Ramesh Kumar — Kirana Owner, Kanpur**
-- Age 42, runs 2 grocery stores
-- Travels 3×/year to Delhi for FMCG supplier meetings  
-- **Current flow:** Books on MakeMyTrip → Manually creates GST invoice in notebook → Arranges ₹10K cash advance from partner → Files expense report 2 weeks later (if he remembers)
-- **Pain:** *"Booking takes 20 minutes, then I have to save the receipt for my CA. Half the time I forget and lose the tax deduction."*
+### Persona 1: Ramesh Kumar — Kirana Owner, Kanpur
+- Age 42, runs 2 grocery stores, ₹15L annual revenue
+- Travels 3×/year to Delhi for FMCG supplier meetings
+- **Current pain:** Books on MMT (20 min), manually creates GST invoice, arranges cash advance
+- **Quote:** *"Half the time I forget the receipt and lose the tax deduction"*
+- **Tech comfort:** Low (uses WhatsApp, struggles with apps)
+- **JTBD:** Book trip + get GST invoice in <5 min without juggling tools
 
-**Target Persona 2: Priya Shah — Boutique Owner, Surat**
-- Age 35, runs textile boutique
+### Persona 2: Priya Shah — Boutique Owner, Surat
+- Age 35, textile boutique, ₹40L revenue
 - Travels 6×/year to Mumbai/Bangalore for fabric sourcing
-- Has Paytm Business Credit (₹50K limit), uses WhatsApp heavily
-- **Pain:** *"I book on Cleartrip, then manually type invoice details into Excel for my accountant. It's annoying and I make mistakes."*
+- Has Paytm Business Credit (₹50K limit), active WhatsApp user
+- **Current pain:** Books on Cleartrip, manually types invoice into Excel for CA
+- **Quote:** *"I make mistakes typing GSTIN, then my CA calls me to fix it"*
+- **JTBD:** One-call booking with auto-correct GST invoice
 
 #### #### Quantified Pain Points (Synthesised from public sources + hypothetical primary research)
 > *Methodology note: Pain point estimates below are extrapolated from NASSCOM SMB digitisation reports, Paytm investor presentations (FY24), and hypothetical interviews modelled on semi-urban merchant archetypes in Tier-2 cities. Figures are directional, not statistically validated.*)
@@ -262,74 +266,104 @@ Paytm is positioned to **own this segment with zero competition** because replic
 - Achievable in 4 weeks [**Confidence: High**]
 
 ---
+## Edge Cases & Handling (15 Critical Scenarios)
 
-## 📊 Success Metrics
+| Edge Case | Frequency | Detection | Handling | User Experience |
+|-----------|-----------|-----------|----------|-----------------|
+| **Credit limit insufficient** | 15% | Pre-check before options | Agent: "Credit ₹2K hai, flight ₹4K. Wallet se (₹5K available)?" | Offer wallet fallback |
+| **Flight sold out mid-booking** | 3% | API error during payment | "Yeh flight sold out. Dusra: AI 11 AM, ₹4K?" | Immediate alternative |
+| **GSTIN invalid/suspended** | 3% | GST validation API | "GST suspended. Update karein: [link]. Draft saved." | Block + save draft |
+| **STT confidence <80%** | 20% | Google STT score | "Samajh nahi aaya, phir se?" → 2x → SMS with GUI link | Graceful fallback |
+| **No flights available** | 12% | Empty API response | "Direct nahi. Connecting dikhaun ya dusra date?" | Alternatives |
+| **Call drops mid-booking** | 5% | Connection lost | SMS: "Booking pending ₹3,800. Continue: [link]" | Resume at last stage |
+---
 
-### Metric Hierarchy: North Star → Leading Indicators → AI Performance
+## Competitive Landscape
 
-#### North Star Metric
+### Why No One Else Owns This Space
+
+**Enterprise Tools (MMT for Business, Cleartrip Corporate):**
+- Target: 50+ employee companies
+- Min contract: ₹10L/year + IT integration
+- **Miss SMBs** — kirana owners can't sign ₹10L deals
+
+**Consumer OTAs (MMT, Goibibo):**
+- No GST auto-generation (merchants screenshot & edit)
+- No business credit integration
+- Treat merchants like leisure travelers
+
+**Fintech Players (PhonePe, Razorpay):**
+- Have merchant relationships, payments
+- **Missing:** Travel inventory, GST invoicing
+- Would take 18 months to build
+
+### Paytm's Unique Stack
+Only company with **all 4 pieces operational:**
+1. 30M merchant KYC + GSTIN
+2. Paytm Business Credit (₹5-50K lines)
+3. GST invoice infrastructure
+4. Travel inventory (Amadeus partnerships)
+
+**Replication Time for Competitors:** 2-3 years (need to build payments company)
+
+---
+
+## Success Metrics
+
+### North Star Metric
 **% of Bookings via Paytm Business Credit: 40%+ target**
+- Why: This is a credit activation play, not travel GMV
+- Credit interest (12% APR) >> booking commission (2%)
 
-**Why This (Not Total Bookings)?**
-- Strategic goal: This is a **credit activation play**, not a travel GMV play
-- Unit economics: Credit interest (12% APR) > booking commission (2%)
-- Flywheel: Credit usage → repayment data → better underwriting → higher limits → more bookings
+### Tier 1: Product Health
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Call→Booking Conversion | 25%+ | (Completed bookings / Calls with intent) |
+| Avg Call Duration | <3 min | P50 duration for successful bookings |
+| Credit Attachment Rate | 40%+ | (Credit payments / Total bookings) |
+| NPS | 50+ | Post-booking survey (0-10 scale) |
+| Booking Failure Rate | <5% | (Payment/API errors / Total attempts) |
 
----
-
-#### Tier 1: Core Product Health
-
+### Tier 2: AI Performance
 | Metric | Target | Why It Matters |
 |--------|--------|----------------|
-| **Call→Booking Conversion** | 25%+ | Proves voice flow works |
-| **Avg Call Duration** | <3 min | Efficiency promise kept |
-| **Credit Attachment Rate** | 40%+ | North star enabler |
-| **NPS** | 50+ | Merchant satisfaction |
-| **Booking Failure Rate** | <5% | Reliability threshold |
+| STT Accuracy | >85% WER | Voice input quality |
+| NLU Intent Capture | >90% | Destination+date extraction success |
+| Voice Fallback Rate | <20% | Sessions requiring GUI handoff |
+| TTS Latency | <1 sec P95 | Keeps conversation flowing |
 
-#### Tier 2: AI Performance
-
-| Metric | Target | Why It Matters |
-|--------|--------|----------------|
-| **STT Accuracy** | >85% WER | Voice input quality (word-error-rate) |
-| **NLU Intent Capture** | >90% | Correct entity extraction (destination, date) |
-| **Voice Fallback Rate** | <20% | Sessions switching to GUI when voice fails |
-| **TTS Latency** | <1 sec | P95 latency — keeps conversation flowing |
-
-#### Tier 3: Business Impact (Year 1)
-
-| Metric | Target | Why It Matters |
-|--------|--------|----------------|
-| **GMV** | ₹1,440 Cr | Total booking value (~$175M USD) |
-| **Revenue** | ₹33 Cr | Commission (2%) + Credit interest (12% APR) |
-| **New Active Credit Users** | 600K | Merchants using credit for first time |
-| **Repeat Booking Rate** | 20%+ | Merchants booking 2+ trips in 90 days |
-| **Credit Default Rate** | <3% | Risk management threshold |
-
----
-
-### Conversion Funnel (Per 100 Calls)
-
-```
-100 Calls Answered
-  ↓ (95% intent captured)
-95 Searches Executed
-  ↓ (50% find acceptable option)
-48 Options Presented
-  ↓ (70% confirm — our advantage: auto-GST + credit)
-34 Bookings Initiated
-  ↓ (85% payment success)
-29 Bookings Completed
-  ↓ (95% invoice delivered)
-28 Invoices Sent
-
-Final Conversion: 28% ✅ (beats 25% target)
-```
+### Kill Criteria (No-Go Triggers)
+- Conversion <15% after 4-week pilot → Voice adds friction, ship GUI instead
+- Credit attach <25% → Not driving strategic goal, deprioritize
+- NPS <30 → Merchants hate it, stop
 
 **Key Drop-Off Points to Monitor:**
 1. Search → Options (50%): No flights available, pricing too high
 2. Options → Confirm (70%): Merchant changes mind, wants to compare competitors
 
+---
+## Analytics Event Specification
+
+**Funnel Events (Track Drop-Off):**
+
+| Event | Trigger | Properties | Why Track |
+|-------|---------|------------|-----------|
+| `call_initiated` | Merchant dials 1800-XXX | `merchant_id`, `timestamp`, `call_type` | Volume |
+| `identity_verified` | KYC lookup succeeds | `merchant_id`, `credit_limit` | Auth success |
+| `intent_captured` | NLU extracts destination+date | `origin`, `dest`, `confidence`, `retry_count` | NLU accuracy |
+| `flight_search_completed` | API returns results | `results_count`, `api_latency_ms` | Inventory health |
+| `options_presented` | Agent reads 2 flights | `flight_1_id`, `flight_2_price` | Offer quality |
+| `flight_selected` | Merchant confirms | `flight_id`, `time_to_decide_sec` | Decision speed |
+| `payment_method_selected` | Credit or wallet | `method`, `credit_balance_before` | **Credit activation** |
+| `booking_completed` | Payment success | `booking_id`, `gmv`, `total_call_time_sec` | **Core conversion** |
+| `invoice_delivered` | WhatsApp send OK | `invoice_id`, `delivery_time_sec` | GST delivery |
+| `voice_fallback_triggered` | STT <80% confidence | `failure_reason`, `audio_sample_id` | Debug AI |
+
+**Dashboard Views:**
+- Real-time: Calls in progress, bookings/hour
+- Daily: Conversion funnel, credit attach %
+- Weekly: NPS, repeat booking rate
+  
 ---
 
 ## 🤖 AI Architecture
@@ -373,6 +407,34 @@ Final Conversion: 28% ✅ (beats 25% target)
 │  Latency: <1 sec from response → audio playback         │
 └──────────────────────────────────────────────────────────┘
 ```
+## Technical Architecture
+
+[User Phone] 
+    ↓ (Call)
+[Twilio Voice Gateway]
+    ↓
+[STT: Google Cloud Speech API]
+    ↓
+[NLU: BERT fine-tuned on 1K merchant queries]
+    ↓
+[Dialogue Manager: State machine (5 stages)]
+    ↓
+[Backend APIs]
+├── Paytm Merchant API (KYC, GSTIN)
+├── Paytm Credit API (balance check, disbursal)
+├── Paytm Travel API (flights, booking)
+├── GST Validation API (real-time GSTIN check)
+└── WhatsApp Business API (cards, PDF)
+    ↓
+[TTS: Google Cloud TTS]
+    ↓
+[User Hears Response]
+
+**Key Decisions:**
+- Why Google STT (not custom): Hindi+English code-switching out-of-box, 85% accuracy
+- Why BERT (not GPT): Lower latency (<500ms), fine-tunable on 1K examples
+- Why WhatsApp (not app): 95% merchant adoption, zero download friction
+- ----
 
 ### Fallback Architecture: When AI Fails
 
@@ -461,81 +523,23 @@ Final Conversion: 28% ✅ (beats 25% target)
 
 **Key Insight:** Travel isn't the product — **credit is the product, travel is the wedge.** [**Confidence: High**]
 
-## 📌 About This Case Study
-
-### Why This Demonstrates Senior AI PM Skills
-
-#### 1. **Travel + Fintech Fusion** (The Role's Core Requirement)
-
-This isn't a travel product with payments bolted on — it's a **credit activation product** where travel is the wedge.
-
-**Travel Side:**
-- Inventory management (flight APIs, real-time pricing)
-- Booking flow optimization (3-min constraint)
-- Operations (PNR generation, cancellations, refunds)
-
-**Fintech Side:**
-- Credit underwriting (pre-approval, limit checks)
-- Payment orchestration (credit vs. wallet fallback)
-- Compliance (GST invoicing, tax reporting)
-
-**The Inseparable Fusion:**
-- Every booking = credit event (drives utilization)
-- Every invoice = tax event (compliance is the value prop)
-- Can't unbundle without destroying competitive advantage
-
-[**Confidence: High**]
-
 ---
+## Strategic Context
 
-#### 2. **AI Product Thinking** (Not Just Feature Thinking)
+### Why Paytm Can Win (Competitive Moat)
+- Only player with merchant KYC + credit + GST + travel in one stack
+- 30M existing relationships = zero CAC
+- Competitors (MMT, PhonePe) would need 2-3 years to replicate
 
-**Voice-GUI Orchestration:**
-- Designed a hybrid where voice and screen have distinct roles
-- Not "add voice to app" — reimagined the interface paradigm
+### Why Voice (Not Just GUI)
+- Target users: Low digital literacy merchants in Tier 2/3 cities
+- User research: 60% prefer speaking over app navigation for transactional tasks
+- Speed advantage: 3 min voice booking vs. 8-12 min app flow
 
-**Conversational Design:**
-- 5-stage slot-filling flow with error recovery
-- Handles code-switching (Hindi-English), regional variants
-
-**Fallback Architecture:**
-- 15+ failure modes with recovery paths
-- Assumes AI will fail 20% of the time → designs around it
-
-**Proactive Personalization:**
-- Seasonal pattern detection triggers outbound calls
-- Right-time intervention (catch intent before it leaks to competitors)
-
-**Metrics Tied to Outcomes:**
-- Not "STT accuracy" (vanity) → "Voice fallback rate" (impacts UX)
-- Measures AI by business impact (credit attach, conversion)
-
-[**Confidence: High**]
-
----
-
-#### 3. **Strategic Product Thinking** (Not Just Tactical Execution)
-
-**The Wedge Strategy:**
-- Travel = hook (low-friction need)
-- Credit = business (12% APR >> 2% commission)
-- Data = moat (travel patterns → underwriting edge)
-
-**The Zero-CAC Insight:**
-- 30M merchants already on Paytm → no acquisition cost
-- ₹1,440 Cr GMV from activating dormant relationships
-
-**The Whitespace Play:**
-- Enterprise tools ignore SMBs (too small)
-- Consumer OTAs ignore business needs
-- Paytm positioned to own segment with no competition
-
-**Competitive Moat:**
-- Only player with all 4 rails operational
-- Competitors need 3 years to build payments infra
-
-[**Confidence: High**]
-
+### Business Model
+- Primary: Credit activation (12% APR on ₹432 Cr disbursed = ₹4.3 Cr)
+- Secondary: Booking commission (2% of ₹1,440 Cr GMV = ₹29 Cr)
+- **This is a credit product, not a travel product**
 **TL;DR**
 
 -Problem: 3M traveling merchants juggle OTAs + manual GST + separate credit — 17 min per booking, 40% invoice errors
@@ -545,6 +549,30 @@ This isn't a travel product with payments bolted on — it's a **credit activati
 -Impact: ₹1,440 Cr GMV, ₹33 Cr revenue (Year 1). 600K new active credit users. Zero CAC.
 
 ---
+## Launch Plan
+
+### Phase 1: Internal Dogfooding (Week 1-2)
+- 20 Paytm employees book real trips
+- Goal: Find blocking bugs, refine Hindi prompts
+
+### Phase 2: Closed Pilot (Week 3-6)
+- 500 merchants: Kanpur (200), Surat (150), Jaipur (150)
+- Selection: 2+ trips/year, credit pre-approved, opted-in
+- **Success criteria:** 100+ bookings, 25% conversion, 50+ NPS
+
+### Phase 3: Go/No-Go (Week 7)
+- **GO if:** Conversion >15%, credit attach >25%, NPS >40
+- **NO-GO if:** Conversion <10% → Ship GUI instead of voice
+
+### Phase 4: Scale (Week 8+)
+- 10K merchants, 15 cities
+- Add trains, multi-city (if data supports)
+
+### Merchant Discovery
+- In-app banner: "Book business travel via call: 1800-XXX"
+- WhatsApp broadcast to credit-eligible merchants
+- Proactive calls to merchants with seasonal travel patterns
+- -----
 
 ### Author's Note
 
