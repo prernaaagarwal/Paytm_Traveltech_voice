@@ -1,0 +1,73 @@
+Call Flow Diagram
+
+[Merchant Calls 1800-XXX-XXXX]
+       ↓
+[IVR: "Welcome to Paytm Business Travel"]
+       ↓
+[AI Agent Answers: "Namaste Ramesh bhai, kahan jaana hai?"]
+       ↓ (15 sec)
+[NLU Extracts: Origin, Destination, Date]
+       ↓
+[Flight Search API Call]
+       ↓ (30 sec)
+[Agent Reads 2 Options | WhatsApp Shows Cards]
+       ↓
+[Merchant Confirms: "Air India wala"]
+       ↓ (45 sec)
+[Payment Method: "Credit se" → ₹3,800 deducted]
+       ↓
+[Booking Confirmed → PNR Generated]
+       ↓ (75 sec)
+[GST Invoice Auto-Generated → WhatsApp PDF]
+       ↓
+[Agent Reads Summary | E-ticket Sent]
+       ↓ (90 sec)
+[Call Ends: "Safe travels!"]
+
+-----------------------------
+
+WhatsApp Companion Screen Mockup
+┌──────────────────────────────────────┐
+│  Paytm Business Travel               │
+│  ────────────────────────────────    │
+│                                      │
+│  🎤 Listening...                     │
+│  "Kal Kanpur se Delhi, subah"       │
+│                                      │
+│  ✈️ 2 Options Found                  │
+│                                      │
+│  ┌────────────────────────────────┐ │
+│  │ IndiGo 6E-123                  │ │
+│  │ 08:00 → 10:30 (2h 30m)         │ │
+│  │ ₹4,200                         │ │
+│  │         [Select] ─────────────→│ │
+│  └────────────────────────────────┘ │
+│                                      │
+│  ┌────────────────────────────────┐ │
+│  │ Air India AI-456               │ │
+│  │ 09:30 → 12:00 (2h 30m)         │ │
+│  │ ₹3,800                         │ │
+│  │         [Select] ─────────────→│ │
+│  └────────────────────────────────┘ │
+│                                      │
+│  💬 Or tell me your choice          │
+└──────────────────────────────────────┘
+
+---------------------------------
+
+Credit Activation Flywheel
+
+┌─────────────────────────────────────────┐
+│   Merchant books travel via credit      │
+│              ↓                          │
+│   Paytm collects repayment data         │
+│              ↓                          │
+│   Better credit underwriting            │
+│              ↓                          │
+│   Higher credit limits approved         │
+│              ↓                          │
+│   More bookings (bigger trips)          │
+│              ↓                          │
+│   More repayment data...                │
+│   (Loop repeats)                        │
+└─────────────────────────────────────────┘
