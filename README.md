@@ -536,6 +536,14 @@ This isn't a travel product with payments bolted on — it's a **credit activati
 
 [**Confidence: High**]
 
+**TL;DR**
+
+-Problem: 3M traveling merchants juggle OTAs + manual GST + separate credit — 17 min per booking, 40% invoice errors
+-Solution: Voice-first helpline where merchants call, book in <3 min, get auto-GST invoice, pay via Paytm Business Credit
+-Moat: Only company with merchant KYC + credit + GST + travel in one stack — competitors need 3 years to replicate
+-MVP: 500 merchants, 3 cities, 4 weeks. Target: 25% conversion, 40% credit attach, 50+ NPS
+-Impact: ₹1,440 Cr GMV, ₹33 Cr revenue (Year 1). 600K new active credit users. Zero CAC.
+
 ---
 
 ### Author's Note
@@ -545,8 +553,6 @@ This case study was designed to demonstrate:
 - ✅ AI-specific skills (voice design, fallbacks, conversation flow)
 - ✅ Business acumen (unit economics, competitive moats, GTM)
 - ✅ Execution rigor (MVP scoping, metrics, edge cases, launch plan)
-
-For a **Senior AI Product Manager role** where travel and fintech expertise intersect — this showcases both domains and the synthesis between them.
 
 ---
 
