@@ -572,6 +572,203 @@
       .attr("fill", "rgba(255,255,255,0.78)")
       .attr("letter-spacing", "0.03em")
       .text(d => d.timeRange);
+
+    // ---------- Failure mode data (18 entries) ----------
+    const FM_W = 160;
+    const FM_H = 46;
+    const FM_GAP = 12;
+    const FM_TOP = STAGE_CY + STAGE_H / 2 + 50;
+    const CROSS_Y = 720;
+
+    const failureModes = [
+      // Voice / STT — primary home: Stage 1
+      { id: "FM-01", name: "STT Low Confidence",    cat: "voice", primary: "stage-1", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 15, trigger: "STT confidence < 0.80 or WER > 25%",
+        recovery: [{ ch: "voice", text: "Re-ask naturally: \"Phir se bataiye?\"" }, { ch: "wa", text: "Switch to WhatsApp interactive form" }, { ch: "sms", text: "Send SMS booking link" }] },
+      { id: "FM-02", name: "Background Noise",      cat: "voice", primary: "stage-1", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 5, trigger: "Signal-to-noise ratio < 6 dB for 3+ sec",
+        recovery: [{ ch: "wa", text: "Offer WhatsApp link immediately" }, { ch: "wa", text: "Send WA draft save message" }, { ch: "sms", text: "SMS fallback with resume link" }] },
+      { id: "FM-03", name: "Unsupported Language",   cat: "voice", primary: "stage-1", stages: ["stage-1","stage-2"], freq: 8, trigger: "STT detects Gujarati / Tamil / Marathi",
+        recovery: [{ ch: "voice", text: "\"Hindi ya English mein bataiye?\"" }, { ch: "wa", text: "Push to WhatsApp form with text inputs" }, { ch: "human", text: "Graceful exit + save session" }] },
+      { id: "FM-04", name: "Merchant Interrupts",    cat: "ok",    primary: "stage-1", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 15, trigger: "Voice activity during agent speech",
+        recovery: [{ ch: "voice", text: "Stop agent audio, listen, continue naturally" }] },
+      // NLU — primary home: Stage 2
+      { id: "FM-05", name: "Destination Unknown",    cat: "nlu",   primary: "stage-2", stages: ["stage-2"], freq: 8, trigger: "NLU cannot extract valid destination city",
+        recovery: [{ ch: "voice", text: "\"City ka naam bataiye — like Delhi ya Mumbai\"" }, { ch: "wa", text: "WhatsApp city picker (top 20)" }, { ch: "human", text: "Graceful exit + save session" }] },
+      { id: "FM-06", name: "Ambiguous Date / Time",  cat: "nlu",   primary: "stage-2", stages: ["stage-2"], freq: 6, trigger: "Date confidence < 0.80 or resolves to past",
+        recovery: [{ ch: "voice", text: "\"Kaunsa 15? April 15 kal?\"" }, { ch: "voice", text: "Confirm relative → absolute date" }, { ch: "wa", text: "WA date picker" }] },
+      { id: "FM-07", name: "Intent Conflict",        cat: "nlu",   primary: "stage-2", stages: ["stage-2","stage-3"], freq: 5, trigger: "Merchant changes mind mid-stage",
+        recovery: [{ ch: "voice", text: "CANCEL: clean exit + save 24hr" }, { ch: "voice", text: "CHANGE: reset slots, re-run search" }, { ch: "voice", text: "TRAIN: politely decline + log" }] },
+      // API — primary home: Stage 2
+      { id: "FM-08", name: "Flight API Timeout",     cat: "api",   primary: "stage-2", stages: ["stage-2"], freq: 3, trigger: "Paytm Travel API latency > 5 sec",
+        recovery: [{ ch: "voice", text: "Fill time: \"Ek second, flights dhoond raha hoon...\"" }, { ch: "voice", text: "Serve cached results (< 15 min old)" }, { ch: "wa", text: "Offer WA callback when ready" }] },
+      { id: "FM-09", name: "No Flights Available",   cat: "api",   primary: "stage-2", stages: ["stage-2"], freq: 12, trigger: "Flight API returns empty results",
+        recovery: [{ ch: "voice", text: "Check connecting flights" }, { ch: "voice", text: "Check alternate nearby airports" }, { ch: "voice", text: "Check nearby dates (±1 day)" }, { ch: "human", text: "Log route gap; offer exit + save" }] },
+      // API — primary home: Stage 3
+      { id: "FM-10", name: "Credit Declined",        cat: "api",   primary: "stage-3", stages: ["stage-3"], freq: 5, trigger: "Paytm Credit API returns DECLINED",
+        recovery: [{ ch: "voice", text: "LIMIT: \"Wallet mein ₹X hai — wallet se karein?\"" }, { ch: "voice", text: "RISK_HOLD: suggest wallet + 24–48hr reset" }, { ch: "voice", text: "OVERDUE: suggest wallet or support" }] },
+      { id: "FM-11", name: "Wallet Debit Failure",   cat: "api",   primary: "stage-3", stages: ["stage-3"], freq: 2, trigger: "Wallet API error (insufficient or technical)",
+        recovery: [{ ch: "voice", text: "Insufficient: prompt top-up or credit" }, { ch: "voice", text: "Technical: silent retry 1x" }, { ch: "wa", text: "WA notification on auto-retry result" }] },
+      { id: "FM-12", name: "Seat Sold Out",          cat: "api",   primary: "stage-3", stages: ["stage-3"], freq: 3, trigger: "Booking API returns SEAT_NOT_AVAILABLE",
+        recovery: [{ ch: "voice", text: "Offer Flight 2 if still available" }, { ch: "voice", text: "Re-run search, present 2 new options" }, { ch: "human", text: "Human callback if all exhausted" }] },
+      { id: "FM-13", name: "Price Changed",          cat: "api",   primary: "stage-3", stages: ["stage-3"], freq: 5, trigger: "Final price > 5% higher than search price",
+        recovery: [{ ch: "voice", text: "< 10%: \"₹X zyada — confirm?\"" }, { ch: "voice", text: "> 10%: proactive alternative at stable price" }] },
+      // API — primary home: Stage 4
+      { id: "FM-14", name: "GSTIN Suspended",        cat: "api",   primary: "stage-4", stages: ["stage-4"], freq: 3, trigger: "GST Portal returns SUSPENDED / CANCELLED",
+        recovery: [{ ch: "voice", text: "Complete PNR without invoice" }, { ch: "wa", text: "WA link to update GSTIN" }, { ch: "human", text: "Pending invoice job (7-day TTL)" }] },
+      { id: "FM-15", name: "Invoice PDF Failure",    cat: "api",   primary: "stage-4", stages: ["stage-4"], freq: 1, trigger: "PDF rendering service timeout or error",
+        recovery: [{ ch: "voice", text: "\"Invoice 5 min mein aayegi\"" }, { ch: "wa", text: "Text-only invoice as WA message" }, { ch: "human", text: "Flag for manual generation (2hr SLA)" }] },
+      // Cross-stage
+      { id: "FM-16", name: "WhatsApp Delivery Fail", cat: "api",   primary: "cross", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 2, trigger: "WhatsApp Business API non-delivered status",
+        recovery: [{ ch: "wa", text: "Auto-retry 2x (10s backoff)" }, { ch: "sms", text: "SMS fallback with text version" }, { ch: "sms", text: "Switch all future messages to SMS" }] },
+      { id: "FM-17", name: "Call Drops Mid-Booking",  cat: "api",   primary: "cross", stages: ["stage-2","stage-3","stage-4"], freq: 3, trigger: "Telephony session terminates unexpectedly",
+        recovery: [{ ch: "voice", text: "Immediate state save to DB" }, { ch: "wa", text: "WA: \"Booking [Flight] — Seats held X min. [Complete]\"" }, { ch: "sms", text: "SMS backup if WA fails" }, { ch: "human", text: "Auto-callback after 2 min" }] },
+      { id: "FM-18", name: "Agent Queue Full",       cat: "api",   primary: "cross", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 5, trigger: "All human agents busy; wait > 3 min",
+        recovery: [{ ch: "voice", text: "\"Specialist {wait_time} min. Wait ya callback?\"" }, { ch: "wa", text: "WA booking reference + callback slot" }, { ch: "voice", text: "Self-serve if FAQ-answerable" }] }
+    ];
+
+    // Separate per-stage and cross-stage FMs
+    const perStageFMs = failureModes.filter(f => f.primary !== "cross");
+    const crossStageFMs = failureModes.filter(f => f.primary === "cross");
+
+    // Compute (x, y) for each per-stage FM based on its parent stage column
+    const stageColumnCounts = {};
+    perStageFMs.forEach(fm => {
+      const col = stageColumnCounts[fm.primary] || 0;
+      fm.x = stages.find(s => s.id === fm.primary).cx - FM_W / 2;
+      fm.y = FM_TOP + col * (FM_H + FM_GAP);
+      stageColumnCounts[fm.primary] = col + 1;
+    });
+
+    // Position cross-stage FMs centered along bottom row
+    const crossTotalW = crossStageFMs.length * FM_W + (crossStageFMs.length - 1) * 24;
+    const crossStartX = 700 - crossTotalW / 2;
+    crossStageFMs.forEach((fm, i) => {
+      fm.x = crossStartX + i * (FM_W + 24);
+      fm.y = CROSS_Y;
+    });
+
+    // Category → CSS modifier
+    function fmClass(fm) {
+      if (fm.primary === "cross") return "fm-node fm-node--cross fm-node--" + fm.cat;
+      if (fm.cat === "ok") return "fm-node fm-node--ok";
+      return "fm-node fm-node--" + fm.cat;
+    }
+
+    // ---------- FM connector curves ----------
+    const fmConnectorsLayer = svg.append("g").attr("class", "fm-connectors-layer");
+
+    perStageFMs.forEach(fm => {
+      const parentStage = stages.find(s => s.id === fm.primary);
+      const sx = parentStage.cx;
+      const sy = STAGE_CY + STAGE_H / 2;
+      const tx = fm.x + FM_W / 2;
+      const ty = fm.y;
+      const midY = (sy + ty) / 2;
+      fmConnectorsLayer.append("path")
+        .attr("class", "connector-fm")
+        .attr("data-fm", fm.id)
+        .attr("data-stage", fm.primary)
+        .attr("d", `M${sx},${sy} C${sx},${midY} ${tx},${midY} ${tx},${ty}`);
+    });
+
+    // Cross-stage FM connectors — dashed lines to each applicable stage
+    crossStageFMs.forEach(fm => {
+      fm.stages.forEach(sid => {
+        const parentStage = stages.find(s => s.id === sid);
+        if (!parentStage) return;
+        const sx = parentStage.cx;
+        const sy = STAGE_CY + STAGE_H / 2;
+        const tx = fm.x + FM_W / 2;
+        const ty = fm.y;
+        const midY = sy + (ty - sy) * 0.35;
+        fmConnectorsLayer.append("path")
+          .attr("class", "connector-fm connector-fm--cross")
+          .attr("data-fm", fm.id)
+          .attr("data-stage", sid)
+          .attr("d", `M${sx},${sy} C${sx},${midY} ${tx},${midY + (ty - sy) * 0.25} ${tx},${ty}`)
+          .attr("stroke-dasharray", "5 4")
+          .attr("opacity", 0.35);
+      });
+    });
+
+    // ---------- Cross-stage label ----------
+    svg.append("text")
+      .attr("x", 700)
+      .attr("y", CROSS_Y - 24)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 10)
+      .attr("font-weight", 700)
+      .attr("letter-spacing", "0.12em")
+      .attr("fill", "#8893a6")
+      .text("CROSS-STAGE FAILURE MODES");
+
+    svg.append("line")
+      .attr("x1", crossStartX - 20).attr("x2", crossStartX + crossTotalW + 20)
+      .attr("y1", CROSS_Y - 16).attr("y2", CROSS_Y - 16)
+      .attr("stroke", "#e4e8ef").attr("stroke-dasharray", "6 4");
+
+    // ---------- Failure mode nodes ----------
+    const fmLayer = svg.append("g").attr("class", "fm-layer");
+    const allFMs = [...perStageFMs, ...crossStageFMs];
+
+    const fmG = fmLayer.selectAll("g.fm-node")
+      .data(allFMs, d => d.id)
+      .join("g")
+        .attr("class", d => fmClass(d))
+        .attr("data-id", d => d.id)
+        .attr("transform", d => `translate(${d.x}, ${d.y})`)
+        .attr("tabindex", 0)
+        .attr("role", "button")
+        .attr("aria-label", d => `${d.id}: ${d.name}, ~${d.freq}% frequency`);
+
+    fmG.append("rect")
+      .attr("width", FM_W)
+      .attr("height", FM_H)
+      .attr("rx", 8)
+      .attr("ry", 8);
+
+    // FM-ID badge (top-left)
+    fmG.append("text")
+      .attr("class", "fm-id")
+      .attr("x", 8)
+      .attr("y", 14)
+      .attr("font-size", 9)
+      .attr("fill", d => {
+        if (d.cat === "voice") return "#c06600";
+        if (d.cat === "nlu") return "#5a3fd6";
+        if (d.cat === "ok") return "#007a3a";
+        return "#a82020";
+      })
+      .text(d => d.id);
+
+    // FM name
+    fmG.append("text")
+      .attr("x", 8)
+      .attr("y", 32)
+      .attr("font-size", 11)
+      .attr("font-weight", 600)
+      .attr("fill", "#1a2236")
+      .text(d => d.name);
+
+    // Frequency badge (top-right)
+    fmG.append("text")
+      .attr("x", FM_W - 8)
+      .attr("y", 14)
+      .attr("text-anchor", "end")
+      .attr("font-size", 9)
+      .attr("font-weight", 600)
+      .attr("fill", "#8893a6")
+      .text(d => `~${d.freq}%`);
+
+    // "Natural behavior" badge for FM-04
+    fmG.filter(d => d.cat === "ok")
+      .append("text")
+        .attr("x", FM_W - 8)
+        .attr("y", 36)
+        .attr("text-anchor", "end")
+        .attr("font-size", 8)
+        .attr("font-weight", 600)
+        .attr("fill", "#00a651")
+        .text("OK — natural");
   </script>
 </body>
 </html>
