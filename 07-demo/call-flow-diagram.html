@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive visualization of the Paytm Merchant Travel Desk voice agent's 5-stage call flow with 18 failure modes and recovery paths." />
+  <title>Paytm Voice Agent — Call Flow Diagram</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* ---------- Design tokens ---------- */
+    :root {
+      --c-bg: #f5f7fa;
+      --c-surface: #ffffff;
+      --c-surface-alt: #fafbfd;
+      --c-border: #e4e8ef;
+      --c-border-strong: #cdd4e0;
+      --c-text: #1a2236;
+      --c-text-muted: #5b6577;
+      --c-text-soft: #8893a6;
+
+      /* Paytm palette */
+      --c-stage: #002970;
+      --c-stage-hover: #003a9b;
+      --c-accent: #00baf2;
+
+      /* Failure categories */
+      --c-voice: #f7941d;
+      --c-nlu: #7b61ff;
+      --c-api: #d62b2b;
+      --c-cross: #6b7280;
+      --c-ok: #00a651;
+
+      /* Channel badges */
+      --c-ch-voice: #00a651;
+      --c-ch-wa: #25d366;
+      --c-ch-sms: #5b8def;
+      --c-ch-human: #f7941d;
+
+      --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+      --shadow-2: 0 4px 8px rgba(16, 24, 40, 0.08), 0 12px 24px rgba(16, 24, 40, 0.08);
+      --shadow-panel: 0 -4px 24px rgba(16, 24, 40, 0.08);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+
+      --ff-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --ff-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    }
+
+    /* ---------- Base reset ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--ff-sans);
+      color: var(--c-text);
+      background: var(--c-bg);
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    h1, h2, h3, h4, p { margin: 0; }
+    button {
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* ---------- Header ---------- */
+    .app-header {
+      background: linear-gradient(135deg, var(--c-stage) 0%, #001a48 100%);
+      color: #fff;
+      padding: 20px 28px;
+      box-shadow: var(--shadow-1);
+    }
+    .app-header__inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .app-header__eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--c-accent);
+      margin-bottom: 4px;
+    }
+    .app-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .app-header__meta {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.72);
+      font-weight: 500;
+    }
+
+    /* ---------- Main layout ---------- */
+    .app-main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 20px 28px 24px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    /* ---------- Time budget bar ---------- */
+    #time-budget-bar {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-1);
+    }
+
+    /* ---------- Diagram canvas ---------- */
+    #diagram-container {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-1);
+      overflow: hidden;
+      position: relative;
+    }
+    #diagram-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      background:
+        radial-gradient(circle at 1px 1px, rgba(16, 24, 40, 0.05) 1px, transparent 0) 0 0 / 24px 24px,
+        var(--c-surface);
+    }
+
+    /* SVG node styles (applied via classes in Steps 6–7) */
+    .stage-node rect {
+      fill: var(--c-stage);
+      stroke: transparent;
+      stroke-width: 2;
+      filter: drop-shadow(0 2px 4px rgba(0, 41, 112, 0.25));
+      transition: fill 180ms ease, stroke 180ms ease, transform 180ms ease;
+      cursor: pointer;
+    }
+    .stage-node:hover rect { fill: var(--c-stage-hover); }
+    .stage-node.is-selected rect { stroke: var(--c-accent); stroke-width: 3; }
+    .stage-node text { fill: #fff; pointer-events: none; }
+
+    .fm-node rect {
+      fill: #fff;
+      stroke-width: 1.5;
+      transition: transform 180ms ease, stroke-width 180ms ease;
+      cursor: pointer;
+    }
+    .fm-node--voice rect { stroke: var(--c-voice); }
+    .fm-node--nlu rect   { stroke: var(--c-nlu); }
+    .fm-node--api rect   { stroke: var(--c-api); }
+    .fm-node--ok rect    { stroke: var(--c-ok); }
+    .fm-node--cross rect { stroke-dasharray: 4 3; stroke: var(--c-cross); }
+    .fm-node:hover rect  { stroke-width: 2.5; }
+    .fm-node.is-selected rect { stroke-width: 3; filter: drop-shadow(0 2px 6px rgba(16, 24, 40, 0.18)); }
+    .fm-node text { pointer-events: none; }
+    .fm-node .fm-id { font-family: var(--ff-mono); font-size: 10px; font-weight: 600; }
+
+    .connector-happy {
+      fill: none;
+      stroke: var(--c-accent);
+      stroke-width: 2.5;
+      marker-end: url(#arrow-happy);
+      transition: opacity 180ms ease;
+    }
+    .connector-fm {
+      fill: none;
+      stroke: var(--c-border-strong);
+      stroke-width: 1.25;
+      stroke-dasharray: 3 3;
+      transition: stroke 180ms ease, opacity 180ms ease;
+    }
+    .connector-fm.is-active { stroke: var(--c-accent); stroke-dasharray: none; stroke-width: 2; }
+
+    .is-dimmed { opacity: 0.28; }
+
+    /* ---------- Detail panel ---------- */
+    .detail-panel {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: min(420px, calc(100vw - 48px));
+      max-height: calc(100vh - 48px);
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(8px);
+      opacity: 0;
+      transition: transform 220ms ease, opacity 220ms ease;
+      z-index: 50;
+    }
+    .detail-panel:not([hidden]) { opacity: 1; transform: translateY(0); }
+    .detail-panel__header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--c-border);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .detail-panel__badge {
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--c-surface-alt);
+      border: 1px solid var(--c-border);
+      color: var(--c-text-muted);
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .detail-panel__close {
+      margin-left: auto;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      color: var(--c-text-soft);
+      display: grid;
+      place-items: center;
+    }
+    .detail-panel__close:hover { background: var(--c-surface-alt); color: var(--c-text); }
+    .detail-panel__title { font-size: 16px; font-weight: 700; letter-spacing: -0.005em; }
+    .detail-panel__subtitle { font-size: 12px; color: var(--c-text-muted); margin-top: 2px; }
+    .detail-panel__body {
+      padding: 16px 20px 20px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    .detail-panel__section { margin-bottom: 14px; }
+    .detail-panel__section:last-child { margin-bottom: 0; }
+    .detail-panel__label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-text-soft);
+      margin-bottom: 4px;
+    }
+
+    /* Recovery cascade */
+    .recovery-step {
+      display: flex;
+      gap: 10px;
+      padding: 8px 10px;
+      border-left: 3px solid var(--c-border-strong);
+      margin-bottom: 6px;
+      background: var(--c-surface-alt);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .recovery-step__channel {
+      font-family: var(--ff-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #fff;
+      height: fit-content;
+      flex-shrink: 0;
+    }
+    .recovery-step--voice  .recovery-step__channel { background: var(--c-ch-voice); }
+    .recovery-step--wa     .recovery-step__channel { background: var(--c-ch-wa); }
+    .recovery-step--sms    .recovery-step__channel { background: var(--c-ch-sms); }
+    .recovery-step--human  .recovery-step__channel { background: var(--c-ch-human); }
+    .recovery-step__text   { font-size: 12.5px; color: var(--c-text); }
+
+    .freq-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .freq-bar__track {
+      flex: 1;
+      height: 6px;
+      background: var(--c-surface-alt);
+      border: 1px solid var(--c-border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .freq-bar__fill { height: 100%; background: var(--c-accent); }
+
+    /* ---------- Footer ---------- */
+    .app-footer {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 28px 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .legend, .circuit-breakers {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-1);
+    }
+    .legend__title, .circuit-breakers__title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-text-soft);
+      margin-bottom: 10px;
+    }
+    .legend__items { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+    .legend__item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+    .legend__swatch {
+      width: 14px; height: 14px; border-radius: 4px;
+      border: 1.5px solid; background: #fff;
+    }
+    .legend__swatch--stage { background: var(--c-stage); border-color: var(--c-stage); }
+    .legend__swatch--voice { border-color: var(--c-voice); }
+    .legend__swatch--nlu   { border-color: var(--c-nlu); }
+    .legend__swatch--api   { border-color: var(--c-api); }
+    .legend__swatch--ok    { border-color: var(--c-ok); }
+    .legend__swatch--cross { border-color: var(--c-cross); border-style: dashed; }
+
+    .circuit-breakers__toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      color: var(--c-text);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .circuit-breakers__toggle::after {
+      content: "▸";
+      margin-left: auto;
+      transition: transform 160ms ease;
+      color: var(--c-text-soft);
+    }
+    .circuit-breakers.is-open .circuit-breakers__toggle::after { transform: rotate(90deg); }
+    .circuit-breakers__body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 220ms ease;
+    }
+    .circuit-breakers.is-open .circuit-breakers__body { max-height: 600px; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1200px) {
+      .detail-panel {
+        right: 16px;
+        left: 16px;
+        bottom: 16px;
+        width: auto;
+        max-height: 60vh;
+      }
+      .app-footer { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 900px) {
+      .app-header h1 { font-size: 18px; }
+      .app-main, .app-footer { padding-left: 16px; padding-right: 16px; }
+      #diagram-container { overflow-x: auto; }
+      #diagram-svg { min-width: 1100px; }
+    }
+
+    /* ---------- Keyboard focus ---------- */
+    .stage-node:focus, .fm-node:focus { outline: none; }
+    .stage-node:focus rect,
+    .stage-node:focus-visible rect {
+      stroke: var(--c-accent);
+      stroke-width: 3;
+    }
+    .fm-node:focus rect,
+    .fm-node:focus-visible rect {
+      stroke-width: 3;
+      filter: drop-shadow(0 0 0 2px rgba(0, 186, 242, 0.35));
+    }
+    button:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--c-accent);
+      outline-offset: 2px;
+    }
+
+    /* ---------- Print ---------- */
+    @media print {
+      @page { size: landscape; margin: 12mm; }
+      body { background: #fff; color: #000; }
+      .detail-panel { display: none !important; }
+      .circuit-breakers__body { max-height: none !important; }
+      .circuit-breakers__toggle::after { display: none; }
+      .app-header {
+        background: #fff; color: var(--c-text);
+        box-shadow: none; border-bottom: 1px solid var(--c-border);
+        padding: 8px 16px;
+      }
+      .app-header__eyebrow { color: var(--c-stage); }
+      .app-main, .app-footer { padding: 8px 16px; }
+      #diagram-container { page-break-inside: avoid; box-shadow: none; }
+      .legend, .circuit-breakers { box-shadow: none; page-break-inside: avoid; }
+      .stage-node rect { filter: none; }
+      .is-dimmed { opacity: 1 !important; }
+    }
+
+    /* ---------- Entry animation ---------- */
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeSlide 320ms ease both; }
+
+    @keyframes svgFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    .stage-node, .fm-node, .connector-happy, .connector-fm {
+      animation: svgFadeIn 360ms ease both;
+    }
+
+    /* ---------- Reduced motion ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div style="padding:24px;font-family:system-ui,sans-serif;max-width:600px;margin:40px auto;border:1px solid #ddd;border-radius:8px;">
+      <h2>JavaScript required</h2>
+      <p>This interactive diagram needs JavaScript and network access to load D3.js from its CDN. Please enable JavaScript and refresh the page.</p>
+    </div>
+  </noscript>
+
+  <header class="app-header">
+    <div class="app-header__inner">
+      <div class="app-header__title">
+        <span class="app-header__eyebrow">Paytm Merchant Travel Desk</span>
+        <h1>5-Stage Call Flow &amp; Failure Modes</h1>
+      </div>
+      <div class="app-header__meta">
+        <span>Voice-first booking · 100s target · 18 failure modes</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section id="time-budget-bar" aria-label="Call time budget">
+      <!-- Time budget bar — populated in Step 5 -->
+    </section>
+
+    <section id="diagram-container" aria-label="Call flow diagram">
+      <svg id="diagram-svg" viewBox="0 0 1400 900" role="img" aria-label="5-stage call flow with failure modes">
+        <!-- SVG diagram — populated in Steps 6–7 -->
+      </svg>
+    </section>
+
+    <aside id="detail-panel" class="detail-panel" aria-live="polite" hidden>
+      <!-- Detail panel — populated in Step 9 -->
+    </aside>
+  </main>
+
+  <footer class="app-footer">
+    <div id="legend" class="legend" aria-label="Legend">
+      <div class="legend__title">Legend</div>
+      <div class="legend__items">
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--stage" aria-hidden="true"></span>
+          <span>Call stage</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--voice" aria-hidden="true"></span>
+          <span>Voice / STT failure</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--nlu" aria-hidden="true"></span>
+          <span>NLU failure</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--api" aria-hidden="true"></span>
+          <span>API / backend failure</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--ok" aria-hidden="true"></span>
+          <span>Natural behavior (not a failure)</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--cross" aria-hidden="true"></span>
+          <span>Cross-stage (dashed)</span>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--c-border);font-size:11.5px;color:var(--c-text-muted);line-height:1.6">
+        <strong style="color:var(--c-text)">Tip:</strong> Click any stage to see its time budget, APIs, and failure modes. Click a failure mode to see its trigger, frequency, and recovery cascade.
+      </div>
+    </div>
+
+    <div id="circuit-breakers" class="circuit-breakers" aria-label="Circuit breaker patterns">
+      <button class="circuit-breakers__toggle" type="button" aria-expanded="false" aria-controls="cb-body">
+        Circuit breaker patterns
+        <span style="font-size:11px;font-weight:500;color:var(--c-text-soft);margin-left:auto;margin-right:8px">5 fails / 60s → OPEN · 30s → HALF_OPEN</span>
+      </button>
+      <div class="circuit-breakers__body" id="cb-body">
+        <div style="padding-top:12px">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead>
+              <tr style="text-align:left;color:var(--c-text-soft);font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">
+                <th style="padding:6px 8px;border-bottom:1px solid var(--c-border);width:28%">API</th>
+                <th style="padding:6px 8px;border-bottom:1px solid var(--c-border)">When tripped (OPEN state)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:8px;border-bottom:1px solid var(--c-border);font-family:var(--ff-mono);font-size:11.5px;color:var(--c-stage);font-weight:600">TRAVEL_API</td>
+                <td style="padding:8px;border-bottom:1px solid var(--c-border)">Serve cached results (&lt; 15 min old) or offer callback in 2 min</td>
+              </tr>
+              <tr>
+                <td style="padding:8px;border-bottom:1px solid var(--c-border);font-family:var(--ff-mono);font-size:11.5px;color:var(--c-stage);font-weight:600">CREDIT_API</td>
+                <td style="padding:8px;border-bottom:1px solid var(--c-border)">Fallback to wallet; log for retry; alert ops via PagerDuty</td>
+              </tr>
+              <tr>
+                <td style="padding:8px;border-bottom:1px solid var(--c-border);font-family:var(--ff-mono);font-size:11.5px;color:var(--c-stage);font-weight:600">GST_API</td>
+                <td style="padding:8px;border-bottom:1px solid var(--c-border)">Complete booking without invoice; generate async (7-day TTL)</td>
+              </tr>
+              <tr>
+                <td style="padding:8px;border-bottom:1px solid var(--c-border);font-family:var(--ff-mono);font-size:11.5px;color:var(--c-stage);font-weight:600">WA_API</td>
+                <td style="padding:8px;border-bottom:1px solid var(--c-border)">Fallback to SMS for all companion messages in session</td>
+              </tr>
+              <tr>
+                <td style="padding:8px;font-family:var(--ff-mono);font-size:11.5px;color:var(--c-stage);font-weight:600">MERCHANT_API</td>
+                <td style="padding:8px">Continue with guest flow (no personalization)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top:16px;padding:12px;background:var(--c-surface-alt);border:1px solid var(--c-border);border-radius:var(--radius-sm)">
+            <div class="detail-panel__label" style="margin-bottom:10px">State machine</div>
+            <svg viewBox="0 0 480 96" width="100%" height="96" role="img" aria-label="Circuit breaker state machine">
+              <defs>
+                <marker id="cb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="#8893a6" />
+                </marker>
+              </defs>
+              <!-- CLOSED → OPEN -->
+              <path d="M80,40 C140,10 200,10 240,40" fill="none" stroke="#8893a6" stroke-width="1.5" marker-end="url(#cb-arrow)" />
+              <text x="160" y="18" text-anchor="middle" font-size="10" fill="#5b6577">5 failures / 60s</text>
+              <!-- OPEN → HALF_OPEN -->
+              <path d="M320,40 C360,10 400,10 420,40" fill="none" stroke="#8893a6" stroke-width="1.5" marker-end="url(#cb-arrow)" />
+              <text x="370" y="18" text-anchor="middle" font-size="10" fill="#5b6577">30s timeout</text>
+              <!-- HALF_OPEN → CLOSED (success, curve down back to CLOSED) -->
+              <path d="M420,56 C420,90 80,90 80,56" fill="none" stroke="#8893a6" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#cb-arrow)" />
+              <text x="250" y="86" text-anchor="middle" font-size="10" fill="#5b6577">1 success → CLOSED  ·  1 failure → OPEN</text>
+
+              <!-- CLOSED -->
+              <circle cx="60" cy="48" r="22" fill="#00a651" />
+              <text x="60" y="48" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#fff">CLOSED</text>
+              <!-- OPEN -->
+              <circle cx="260" cy="48" r="22" fill="#d62b2b" />
+              <text x="260" y="48" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#fff">OPEN</text>
+              <!-- HALF_OPEN -->
+              <circle cx="440" cy="48" r="24" fill="#f7941d" />
+              <text x="440" y="45" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="700" fill="#fff">HALF</text>
+              <text x="440" y="55" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="700" fill="#fff">OPEN</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    // Bootstrap check — fails loudly if D3 did not load from the CDN
+    (function () {
+      if (typeof window.d3 === 'undefined') {
+        document.body.innerHTML =
+          '<div style="padding:24px;font-family:system-ui,sans-serif;max-width:600px;margin:40px auto;border:1px solid #ddd;border-radius:8px;">' +
+          '<h2>Unable to load D3.js</h2>' +
+          '<p>This page loads D3.js v7 from <code>https://d3js.org/d3.v7.min.js</code>. Check your internet connection and reload.</p>' +
+          '</div>';
+      }
+    })();
+
+    // ---------- Stage data (minimal) ----------
+    const STAGE_W = 200;
+    const STAGE_H = 100;
+    const STAGE_CY = 200;
+
+    const stages = [
+      { id: "stage-1", num: 1, name: "Identity & Intent",      timeRange: "0–15s",   cx: 140,
+        desc: "Merchant calls → IVR welcome → AI agent picks up. KYC lookup fires in background (<200ms): phone → merchant name, city, GSTIN, credit balance.",
+        waCard: "Welcome card: \"Booking assistant is live\" + [View Options →]",
+        apis: ["Merchant KYC API (<300ms)", "Credit Balance API (<300ms)"],
+        exit: ["Merchant identity confirmed", "WhatsApp companion sent", "Travel intent captured"] },
+      { id: "stage-2", num: 2, name: "Trip Search",            timeRange: "15–45s",  cx: 400,
+        desc: "Agent extracts trip intent via NLU slot-filling (origin, destination, date, passengers). Real-time flight search returns top 2 options ranked by price (40%), time-match (30%), reliability (20%).",
+        waCard: "Flight option cards: airline, time, duration, price, [Select →] button",
+        apis: ["NLU Service — intent + entity extraction (<150ms)", "Paytm Travel API — GET /flights (<3s p95)"],
+        exit: ["Origin, destination, date confirmed", "Flights retrieved", "2 options presented (voice + WA)"] },
+      { id: "stage-3", num: 3, name: "Booking Confirmation",   timeRange: "45–75s",  cx: 660,
+        desc: "Merchant selects flight option, chooses payment method (Paytm Credit or Wallet). Agent reads back details for verbal confirmation, then fires booking API.",
+        waCard: "Payment confirmation card: selected flight + payment method + balance + auto-filled passenger/GSTIN",
+        apis: ["Paytm Credit API (<500ms)", "Wallet API (<300ms)", "Booking API (<5s)"],
+        exit: ["Flight option selected", "Payment method chosen", "Verbal confirmation received", "Booking API returns PNR"] },
+      { id: "stage-4", num: 4, name: "GST + Invoice",          timeRange: "75–90s",  cx: 920,
+        desc: "PNR generated. GSTIN validated against GST Portal. Invoice PDF rendered and delivered to WhatsApp along with e-ticket.",
+        waCard: "Booking confirmed card: PNR, flight details, payment charged, remaining credit, invoice PDF [Download], e-ticket [Download]",
+        apis: ["GST Portal API (<2s)", "PDF Rendering Service (<3s)", "WhatsApp Business API (<200ms)"],
+        exit: ["PNR generated", "GSTIN validated", "Invoice PDF delivered to WhatsApp"] },
+      { id: "stage-5", num: 5, name: "Summary & Exit",         timeRange: "90–100s", cx: 1180,
+        desc: "Agent recaps booking: flight, time, PNR, total paid, remaining credit. Clean call termination. Post-call analytics events fire.",
+        waCard: "Post-call summary: Booking ID, [Change/Cancel], [Return Flight], [Call Support], [Rate Experience]",
+        apis: ["Analytics Event Bus (<50ms)"],
+        exit: ["Booking details recapped", "Call terminated cleanly", "Analytics events fired", "CSAT prompt queued"] }
+    ];
+
+    // ---------- SVG setup ----------
+    const svg = d3.select("#diagram-svg");
+
+    const defs = svg.append("defs");
+    defs.append("marker")
+      .attr("id", "arrow-happy")
+      .attr("viewBox", "0 0 10 10")
+      .attr("refX", 9)
+      .attr("refY", 5)
+      .attr("markerWidth", 8)
+      .attr("markerHeight", 8)
+      .attr("orient", "auto-start-reverse")
+      .append("path")
+        .attr("d", "M0,0 L10,5 L0,10 z")
+        .attr("fill", "var(--c-accent)");
+
+    // ---------- Happy-path connectors (rendered first so stages cover edges) ----------
+    const connectorsLayer = svg.append("g").attr("class", "connectors-layer");
+
+    for (let i = 0; i < stages.length - 1; i++) {
+      const a = stages[i];
+      const b = stages[i + 1];
+      const x1 = a.cx + STAGE_W / 2;
+      const x2 = b.cx - STAGE_W / 2 - 4;
+      connectorsLayer.append("path")
+        .attr("class", "connector-happy")
+        .attr("d", `M${x1},${STAGE_CY} L${x2},${STAGE_CY}`);
+    }
+
+    // ---------- Stage nodes ----------
+    const stagesLayer = svg.append("g").attr("class", "stages-layer");
+
+    const stageG = stagesLayer.selectAll("g.stage-node")
+      .data(stages, d => d.id)
+      .join("g")
+        .attr("class", "stage-node")
+        .attr("transform", d => `translate(${d.cx - STAGE_W / 2}, ${STAGE_CY - STAGE_H / 2})`)
+        .attr("tabindex", 0)
+        .attr("role", "button")
+        .attr("aria-label", d => `Stage ${d.num}: ${d.name}, ${d.timeRange}`);
+
+    stageG.append("rect")
+      .attr("width", STAGE_W)
+      .attr("height", STAGE_H)
+      .attr("rx", 12)
+      .attr("ry", 12);
+
+    // Stage number pill
+    stageG.append("circle")
+      .attr("cx", 18)
+      .attr("cy", 18)
+      .attr("r", 12)
+      .attr("fill", "rgba(255,255,255,0.16)")
+      .attr("stroke", "rgba(255,255,255,0.35)")
+      .attr("stroke-width", 1);
+    stageG.append("text")
+      .attr("x", 18)
+      .attr("y", 18)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "central")
+      .attr("font-size", 11)
+      .attr("font-weight", 700)
+      .attr("fill", "#fff")
+      .text(d => d.num);
+
+    // Stage name (supports 2-line wrapping for long names)
+    stageG.each(function (d) {
+      const g = d3.select(this);
+      const words = d.name.split(" ");
+      // Simple heuristic: wrap at first space if name is long
+      let lines = [d.name];
+      if (d.name.length > 14) {
+        const mid = Math.ceil(words.length / 2);
+        lines = [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+      }
+      const nameY = STAGE_H / 2 - 4 - (lines.length - 1) * 8;
+      lines.forEach((line, i) => {
+        g.append("text")
+          .attr("x", STAGE_W / 2)
+          .attr("y", nameY + i * 16)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "central")
+          .attr("font-size", 14)
+          .attr("font-weight", 600)
+          .attr("fill", "#fff")
+          .text(line);
+      });
+    });
+
+    // Time range (below the name)
+    stageG.append("text")
+      .attr("x", STAGE_W / 2)
+      .attr("y", STAGE_H - 18)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "central")
+      .attr("font-size", 11)
+      .attr("font-weight", 500)
+      .attr("fill", "rgba(255,255,255,0.78)")
+      .attr("letter-spacing", "0.03em")
+      .text(d => d.timeRange);
+
+    // ---------- Failure mode data (18 entries) ----------
+    const FM_W = 160;
+    const FM_H = 46;
+    const FM_GAP = 12;
+    const FM_TOP = STAGE_CY + STAGE_H / 2 + 50;
+    const CROSS_Y = 720;
+
+    const failureModes = [
+      // Voice / STT — primary home: Stage 1
+      { id: "FM-01", name: "STT Low Confidence",    cat: "voice", primary: "stage-1", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 15, trigger: "STT confidence < 0.80 or WER > 25%",
+        recovery: [{ ch: "voice", text: "Re-ask naturally: \"Phir se bataiye?\"" }, { ch: "wa", text: "Switch to WhatsApp interactive form" }, { ch: "sms", text: "Send SMS booking link" }] },
+      { id: "FM-02", name: "Background Noise",      cat: "voice", primary: "stage-1", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 5, trigger: "Signal-to-noise ratio < 6 dB for 3+ sec",
+        recovery: [{ ch: "wa", text: "Offer WhatsApp link immediately" }, { ch: "wa", text: "Send WA draft save message" }, { ch: "sms", text: "SMS fallback with resume link" }] },
+      { id: "FM-03", name: "Unsupported Language",   cat: "voice", primary: "stage-1", stages: ["stage-1","stage-2"], freq: 8, trigger: "STT detects Gujarati / Tamil / Marathi",
+        recovery: [{ ch: "voice", text: "\"Hindi ya English mein bataiye?\"" }, { ch: "wa", text: "Push to WhatsApp form with text inputs" }, { ch: "human", text: "Graceful exit + save session" }] },
+      { id: "FM-04", name: "Merchant Interrupts",    cat: "ok",    primary: "stage-1", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 15, trigger: "Voice activity during agent speech",
+        recovery: [{ ch: "voice", text: "Stop agent audio, listen, continue naturally" }] },
+      // NLU — primary home: Stage 2
+      { id: "FM-05", name: "Destination Unknown",    cat: "nlu",   primary: "stage-2", stages: ["stage-2"], freq: 8, trigger: "NLU cannot extract valid destination city",
+        recovery: [{ ch: "voice", text: "\"City ka naam bataiye — like Delhi ya Mumbai\"" }, { ch: "wa", text: "WhatsApp city picker (top 20)" }, { ch: "human", text: "Graceful exit + save session" }] },
+      { id: "FM-06", name: "Ambiguous Date / Time",  cat: "nlu",   primary: "stage-2", stages: ["stage-2"], freq: 6, trigger: "Date confidence < 0.80 or resolves to past",
+        recovery: [{ ch: "voice", text: "\"Kaunsa 15? April 15 kal?\"" }, { ch: "voice", text: "Confirm relative → absolute date" }, { ch: "wa", text: "WA date picker" }] },
+      { id: "FM-07", name: "Intent Conflict",        cat: "nlu",   primary: "stage-2", stages: ["stage-2","stage-3"], freq: 5, trigger: "Merchant changes mind mid-stage",
+        recovery: [{ ch: "voice", text: "CANCEL: clean exit + save 24hr" }, { ch: "voice", text: "CHANGE: reset slots, re-run search" }, { ch: "voice", text: "TRAIN: politely decline + log" }] },
+      // API — primary home: Stage 2
+      { id: "FM-08", name: "Flight API Timeout",     cat: "api",   primary: "stage-2", stages: ["stage-2"], freq: 3, trigger: "Paytm Travel API latency > 5 sec",
+        recovery: [{ ch: "voice", text: "Fill time: \"Ek second, flights dhoond raha hoon...\"" }, { ch: "voice", text: "Serve cached results (< 15 min old)" }, { ch: "wa", text: "Offer WA callback when ready" }] },
+      { id: "FM-09", name: "No Flights Available",   cat: "api",   primary: "stage-2", stages: ["stage-2"], freq: 12, trigger: "Flight API returns empty results",
+        recovery: [{ ch: "voice", text: "Check connecting flights" }, { ch: "voice", text: "Check alternate nearby airports" }, { ch: "voice", text: "Check nearby dates (±1 day)" }, { ch: "human", text: "Log route gap; offer exit + save" }] },
+      // API — primary home: Stage 3
+      { id: "FM-10", name: "Credit Declined",        cat: "api",   primary: "stage-3", stages: ["stage-3"], freq: 5, trigger: "Paytm Credit API returns DECLINED",
+        recovery: [{ ch: "voice", text: "LIMIT: \"Wallet mein ₹X hai — wallet se karein?\"" }, { ch: "voice", text: "RISK_HOLD: suggest wallet + 24–48hr reset" }, { ch: "voice", text: "OVERDUE: suggest wallet or support" }] },
+      { id: "FM-11", name: "Wallet Debit Failure",   cat: "api",   primary: "stage-3", stages: ["stage-3"], freq: 2, trigger: "Wallet API error (insufficient or technical)",
+        recovery: [{ ch: "voice", text: "Insufficient: prompt top-up or credit" }, { ch: "voice", text: "Technical: silent retry 1x" }, { ch: "wa", text: "WA notification on auto-retry result" }] },
+      { id: "FM-12", name: "Seat Sold Out",          cat: "api",   primary: "stage-3", stages: ["stage-3"], freq: 3, trigger: "Booking API returns SEAT_NOT_AVAILABLE",
+        recovery: [{ ch: "voice", text: "Offer Flight 2 if still available" }, { ch: "voice", text: "Re-run search, present 2 new options" }, { ch: "human", text: "Human callback if all exhausted" }] },
+      { id: "FM-13", name: "Price Changed",          cat: "api",   primary: "stage-3", stages: ["stage-3"], freq: 5, trigger: "Final price > 5% higher than search price",
+        recovery: [{ ch: "voice", text: "< 10%: \"₹X zyada — confirm?\"" }, { ch: "voice", text: "> 10%: proactive alternative at stable price" }] },
+      // API — primary home: Stage 4
+      { id: "FM-14", name: "GSTIN Suspended",        cat: "api",   primary: "stage-4", stages: ["stage-4"], freq: 3, trigger: "GST Portal returns SUSPENDED / CANCELLED",
+        recovery: [{ ch: "voice", text: "Complete PNR without invoice" }, { ch: "wa", text: "WA link to update GSTIN" }, { ch: "human", text: "Pending invoice job (7-day TTL)" }] },
+      { id: "FM-15", name: "Invoice PDF Failure",    cat: "api",   primary: "stage-4", stages: ["stage-4"], freq: 1, trigger: "PDF rendering service timeout or error",
+        recovery: [{ ch: "voice", text: "\"Invoice 5 min mein aayegi\"" }, { ch: "wa", text: "Text-only invoice as WA message" }, { ch: "human", text: "Flag for manual generation (2hr SLA)" }] },
+      // Cross-stage
+      { id: "FM-16", name: "WhatsApp Delivery Fail", cat: "api",   primary: "cross", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 2, trigger: "WhatsApp Business API non-delivered status",
+        recovery: [{ ch: "wa", text: "Auto-retry 2x (10s backoff)" }, { ch: "sms", text: "SMS fallback with text version" }, { ch: "sms", text: "Switch all future messages to SMS" }] },
+      { id: "FM-17", name: "Call Drops Mid-Booking",  cat: "api",   primary: "cross", stages: ["stage-2","stage-3","stage-4"], freq: 3, trigger: "Telephony session terminates unexpectedly",
+        recovery: [{ ch: "voice", text: "Immediate state save to DB" }, { ch: "wa", text: "WA: \"Booking [Flight] — Seats held X min. [Complete]\"" }, { ch: "sms", text: "SMS backup if WA fails" }, { ch: "human", text: "Auto-callback after 2 min" }] },
+      { id: "FM-18", name: "Agent Queue Full",       cat: "api",   primary: "cross", stages: ["stage-1","stage-2","stage-3","stage-4","stage-5"], freq: 5, trigger: "All human agents busy; wait > 3 min",
+        recovery: [{ ch: "voice", text: "\"Specialist {wait_time} min. Wait ya callback?\"" }, { ch: "wa", text: "WA booking reference + callback slot" }, { ch: "voice", text: "Self-serve if FAQ-answerable" }] }
+    ];
+
+    // Separate per-stage and cross-stage FMs
+    const perStageFMs = failureModes.filter(f => f.primary !== "cross");
+    const crossStageFMs = failureModes.filter(f => f.primary === "cross");
+
+    // Compute (x, y) for each per-stage FM based on its parent stage column
+    const stageColumnCounts = {};
+    perStageFMs.forEach(fm => {
+      const col = stageColumnCounts[fm.primary] || 0;
+      fm.x = stages.find(s => s.id === fm.primary).cx - FM_W / 2;
+      fm.y = FM_TOP + col * (FM_H + FM_GAP);
+      stageColumnCounts[fm.primary] = col + 1;
+    });
+
+    // Position cross-stage FMs centered along bottom row
+    const crossTotalW = crossStageFMs.length * FM_W + (crossStageFMs.length - 1) * 24;
+    const crossStartX = 700 - crossTotalW / 2;
+    crossStageFMs.forEach((fm, i) => {
+      fm.x = crossStartX + i * (FM_W + 24);
+      fm.y = CROSS_Y;
+    });
+
+    // Category → CSS modifier
+    function fmClass(fm) {
+      if (fm.primary === "cross") return "fm-node fm-node--cross fm-node--" + fm.cat;
+      if (fm.cat === "ok") return "fm-node fm-node--ok";
+      return "fm-node fm-node--" + fm.cat;
+    }
+
+    // ---------- FM connector curves ----------
+    const fmConnectorsLayer = svg.append("g").attr("class", "fm-connectors-layer");
+
+    perStageFMs.forEach(fm => {
+      const parentStage = stages.find(s => s.id === fm.primary);
+      const sx = parentStage.cx;
+      const sy = STAGE_CY + STAGE_H / 2;
+      const tx = fm.x + FM_W / 2;
+      const ty = fm.y;
+      const midY = (sy + ty) / 2;
+      fmConnectorsLayer.append("path")
+        .attr("class", "connector-fm")
+        .attr("data-fm", fm.id)
+        .attr("data-stage", fm.primary)
+        .attr("d", `M${sx},${sy} C${sx},${midY} ${tx},${midY} ${tx},${ty}`);
+    });
+
+    // Cross-stage FM connectors — dashed lines to each applicable stage
+    crossStageFMs.forEach(fm => {
+      fm.stages.forEach(sid => {
+        const parentStage = stages.find(s => s.id === sid);
+        if (!parentStage) return;
+        const sx = parentStage.cx;
+        const sy = STAGE_CY + STAGE_H / 2;
+        const tx = fm.x + FM_W / 2;
+        const ty = fm.y;
+        const midY = sy + (ty - sy) * 0.35;
+        fmConnectorsLayer.append("path")
+          .attr("class", "connector-fm connector-fm--cross")
+          .attr("data-fm", fm.id)
+          .attr("data-stage", sid)
+          .attr("d", `M${sx},${sy} C${sx},${midY} ${tx},${midY + (ty - sy) * 0.25} ${tx},${ty}`)
+          .attr("stroke-dasharray", "5 4")
+          .attr("opacity", 0.35);
+      });
+    });
+
+    // ---------- Cross-stage label ----------
+    svg.append("text")
+      .attr("x", 700)
+      .attr("y", CROSS_Y - 24)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 10)
+      .attr("font-weight", 700)
+      .attr("letter-spacing", "0.12em")
+      .attr("fill", "#8893a6")
+      .text("CROSS-STAGE FAILURE MODES");
+
+    svg.append("line")
+      .attr("x1", crossStartX - 20).attr("x2", crossStartX + crossTotalW + 20)
+      .attr("y1", CROSS_Y - 16).attr("y2", CROSS_Y - 16)
+      .attr("stroke", "#e4e8ef").attr("stroke-dasharray", "6 4");
+
+    // ---------- Failure mode nodes ----------
+    const fmLayer = svg.append("g").attr("class", "fm-layer");
+    const allFMs = [...perStageFMs, ...crossStageFMs];
+
+    const fmG = fmLayer.selectAll("g.fm-node")
+      .data(allFMs, d => d.id)
+      .join("g")
+        .attr("class", d => fmClass(d))
+        .attr("data-id", d => d.id)
+        .attr("transform", d => `translate(${d.x}, ${d.y})`)
+        .attr("tabindex", 0)
+        .attr("role", "button")
+        .attr("aria-label", d => `${d.id}: ${d.name}, ~${d.freq}% frequency`);
+
+    fmG.append("rect")
+      .attr("width", FM_W)
+      .attr("height", FM_H)
+      .attr("rx", 8)
+      .attr("ry", 8);
+
+    // FM-ID badge (top-left)
+    fmG.append("text")
+      .attr("class", "fm-id")
+      .attr("x", 8)
+      .attr("y", 14)
+      .attr("font-size", 9)
+      .attr("fill", d => {
+        if (d.cat === "voice") return "#c06600";
+        if (d.cat === "nlu") return "#5a3fd6";
+        if (d.cat === "ok") return "#007a3a";
+        return "#a82020";
+      })
+      .text(d => d.id);
+
+    // FM name
+    fmG.append("text")
+      .attr("x", 8)
+      .attr("y", 32)
+      .attr("font-size", 11)
+      .attr("font-weight", 600)
+      .attr("fill", "#1a2236")
+      .text(d => d.name);
+
+    // Frequency badge (top-right)
+    fmG.append("text")
+      .attr("x", FM_W - 8)
+      .attr("y", 14)
+      .attr("text-anchor", "end")
+      .attr("font-size", 9)
+      .attr("font-weight", 600)
+      .attr("fill", "#8893a6")
+      .text(d => `~${d.freq}%`);
+
+    // "Natural behavior" badge for FM-04
+    fmG.filter(d => d.cat === "ok")
+      .append("text")
+        .attr("x", FM_W - 8)
+        .attr("y", 36)
+        .attr("text-anchor", "end")
+        .attr("font-size", 8)
+        .attr("font-weight", 600)
+        .attr("fill", "#00a651")
+        .text("OK — natural");
+
+    // ---------- Staggered entry animation (left-to-right) ----------
+    stageG.style("animation-delay", (_d, i) => `${i * 80}ms`);
+    svg.selectAll(".connector-happy").style("animation-delay", (_d, i) => `${40 + i * 80}ms`);
+    fmG.style("animation-delay", d => {
+      // Delay per-stage FMs by their parent stage's position; cross-stage last
+      if (d.primary === "cross") return "720ms";
+      const parentIdx = stages.findIndex(s => s.id === d.primary);
+      const colIdx = perStageFMs.filter(f => f.primary === d.primary).findIndex(f => f.id === d.id);
+      return `${400 + parentIdx * 40 + colIdx * 30}ms`;
+    });
+    svg.selectAll(".connector-fm").style("animation-delay", "500ms");
+
+    // ---------- Selection state + highlight logic ----------
+    let selection = null; // { type: "stage" | "fm", id: string } | null
+
+    function clearHighlights() {
+      svg.selectAll(".is-selected").classed("is-selected", false);
+      svg.selectAll(".is-dimmed").classed("is-dimmed", false);
+      svg.selectAll(".connector-fm").classed("is-active", false);
+      svg.selectAll(".connector-fm--cross").attr("opacity", 0.35);
+    }
+
+    function highlightStage(stageId) {
+      clearHighlights();
+      const connectedFMs = failureModes.filter(f => f.stages.includes(stageId));
+      const connectedFMIds = new Set(connectedFMs.map(f => f.id));
+
+      // Dim non-connected stages
+      stageG.classed("is-dimmed", s => s.id !== stageId);
+      stageG.filter(s => s.id === stageId).classed("is-selected", true);
+
+      // Dim non-connected FMs; highlight connected ones
+      fmG.classed("is-dimmed", f => !connectedFMIds.has(f.id));
+
+      // Activate relevant connector curves
+      svg.selectAll(".connector-fm")
+        .classed("is-active", function () {
+          const fmId = this.getAttribute("data-fm");
+          const sId = this.getAttribute("data-stage");
+          return sId === stageId && connectedFMIds.has(fmId);
+        });
+      // Fade cross-connectors not bound to this stage
+      svg.selectAll(".connector-fm--cross")
+        .attr("opacity", function () {
+          return this.getAttribute("data-stage") === stageId ? 0.8 : 0.08;
+        });
+    }
+
+    function highlightFM(fmId) {
+      clearHighlights();
+      const fm = failureModes.find(f => f.id === fmId);
+      if (!fm) return;
+      const parentStageIds = new Set(fm.stages);
+
+      // Dim non-parent stages
+      stageG.classed("is-dimmed", s => !parentStageIds.has(s.id));
+
+      // Dim all other FMs; highlight this FM
+      fmG.classed("is-dimmed", f => f.id !== fmId);
+      fmG.filter(f => f.id === fmId).classed("is-selected", true);
+
+      // Activate connectors bound to this FM
+      svg.selectAll(".connector-fm")
+        .classed("is-active", function () {
+          return this.getAttribute("data-fm") === fmId;
+        });
+      svg.selectAll(".connector-fm--cross")
+        .attr("opacity", function () {
+          return this.getAttribute("data-fm") === fmId ? 0.8 : 0.08;
+        });
+    }
+
+    function clearSelection() {
+      selection = null;
+      clearHighlights();
+      hideDetailPanel();
+    }
+
+    // ---------- Detail panel ----------
+    const detailPanel = document.getElementById("detail-panel");
+
+    function panelHeader(badge, title, subtitle) {
+      return `<div class="detail-panel__header">` +
+        `<span class="detail-panel__badge">${badge}</span>` +
+        `<div><div class="detail-panel__title">${title}</div>` +
+        `<div class="detail-panel__subtitle">${subtitle}</div></div>` +
+        `<button class="detail-panel__close" aria-label="Close" data-close>✕</button>` +
+        `</div>`;
+    }
+
+    function section(label, content) {
+      return `<div class="detail-panel__section"><div class="detail-panel__label">${label}</div>${content}</div>`;
+    }
+
+    function showStageDetail(stage) {
+      const stageFMs = failureModes.filter(f => f.stages.includes(stage.id));
+
+      let body = "";
+      body += section("What happens", `<div>${stage.desc}</div>`);
+
+      body += section("WhatsApp companion", `<div style="background:var(--c-surface-alt);border:1px solid var(--c-border);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;color:var(--c-text-muted)">${stage.waCard}</div>`);
+
+      body += section("APIs called", `<div style="display:flex;flex-direction:column;gap:4px">` +
+        stage.apis.map(api => `<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:6px;height:6px;border-radius:50%;background:var(--c-ok);flex-shrink:0"></span>${api}</div>`).join("") +
+        `</div>`);
+
+      body += section("Exit criteria",
+        `<div style="display:flex;flex-direction:column;gap:3px">` +
+        stage.exit.map(e => `<div style="display:flex;align-items:baseline;gap:6px;font-size:12px"><span style="color:var(--c-ok);font-weight:700">✓</span>${e}</div>`).join("") +
+        `</div>`);
+
+      body += section(`Failure modes (${stageFMs.length})`,
+        stageFMs.map(f => {
+          const catColor = { voice: "var(--c-voice)", nlu: "var(--c-nlu)", api: "var(--c-api)", ok: "var(--c-ok)" }[f.cat];
+          return `<span class="detail-panel__badge" style="margin:2px 4px 2px 0;cursor:pointer;border-color:${catColor}" data-fm-link="${f.id}">${f.id}</span>`;
+        }).join(""));
+
+      detailPanel.hidden = false;
+      detailPanel.innerHTML = panelHeader(`STAGE ${stage.num}`, stage.name, `Time budget · ${stage.timeRange}`) +
+        `<div class="detail-panel__body">${body}</div>`;
+    }
+
+    function showFMDetail(fm) {
+      const parentNames = fm.stages.map(sid => {
+        const st = stages.find(s => s.id === sid);
+        return st ? `Stage ${st.num}` : sid;
+      }).join(", ");
+      const catLabel = { voice: "Voice / STT", nlu: "NLU", api: "API / Backend", ok: "Natural behavior" }[fm.cat];
+      const catColor = { voice: "var(--c-voice)", nlu: "var(--c-nlu)", api: "var(--c-api)", ok: "var(--c-ok)" }[fm.cat];
+
+      let body = "";
+
+      body += section("Trigger", `<div>${fm.trigger}</div>`);
+
+      body += section("Frequency",
+        `<div class="freq-bar"><div class="freq-bar__track"><div class="freq-bar__fill" style="width:${Math.min(fm.freq * 5, 100)}%"></div></div><span>~${fm.freq}%</span></div>`);
+
+      body += section("Recovery cascade",
+        `<div style="display:flex;flex-direction:column;gap:6px">` +
+        fm.recovery.map((step, i) => {
+          const chLabel = { voice: "VOICE", wa: "WHATSAPP", sms: "SMS", human: "HUMAN" }[step.ch];
+          return `<div class="recovery-step recovery-step--${step.ch}">` +
+            `<span style="font-family:var(--ff-mono);font-size:10px;color:var(--c-text-soft);width:14px;flex-shrink:0">${i + 1}.</span>` +
+            `<span class="recovery-step__channel">${chLabel}</span>` +
+            `<span class="recovery-step__text">${step.text}</span></div>`;
+        }).join("") +
+        `</div>`);
+
+      body += section("Applies to",
+        fm.stages.map(sid => {
+          const st = stages.find(s => s.id === sid);
+          if (!st) return "";
+          return `<span class="detail-panel__badge" style="margin:2px 4px 2px 0;cursor:pointer" data-stage-link="${st.id}">S${st.num}: ${st.name}</span>`;
+        }).join(""));
+
+      const badgeStyle = `background:${catColor};color:#fff;border-color:${catColor}`;
+      detailPanel.hidden = false;
+      detailPanel.innerHTML = panelHeader(`<span style="${badgeStyle}">${fm.id}</span>`, fm.name, `${catLabel} · ${parentNames}`) +
+        `<div class="detail-panel__body">${body}</div>`;
+    }
+
+    function hideDetailPanel() {
+      detailPanel.hidden = true;
+      detailPanel.innerHTML = "";
+    }
+
+    // ---------- Event wiring ----------
+    stageG.on("click", function (_event, d) {
+      selection = { type: "stage", id: d.id };
+      highlightStage(d.id);
+      showStageDetail(d);
+    });
+
+    fmG.on("click", function (_event, d) {
+      selection = { type: "fm", id: d.id };
+      highlightFM(d.id);
+      showFMDetail(d);
+    });
+
+    // Delegated close + FM-link inside detail panel
+    detailPanel.addEventListener("click", function (e) {
+      if (e.target.closest("[data-close]")) {
+        clearSelection();
+        return;
+      }
+      const fmLink = e.target.closest("[data-fm-link]");
+      if (fmLink) {
+        const fmId = fmLink.getAttribute("data-fm-link");
+        const fm = failureModes.find(f => f.id === fmId);
+        if (fm) {
+          selection = { type: "fm", id: fm.id };
+          highlightFM(fm.id);
+          showFMDetail(fm);
+        }
+        return;
+      }
+      const stageLink = e.target.closest("[data-stage-link]");
+      if (stageLink) {
+        const sid = stageLink.getAttribute("data-stage-link");
+        const st = stages.find(s => s.id === sid);
+        if (st) {
+          selection = { type: "stage", id: st.id };
+          highlightStage(st.id);
+          showStageDetail(st);
+        }
+      }
+    });
+
+    // Click on empty SVG background clears selection
+    svg.on("click", function (event) {
+      if (event.target === this || event.target.tagName === "g" && !event.target.classList.length) {
+        clearSelection();
+      }
+    });
+
+    // Keyboard: Enter/Space activates focused node, Escape clears
+    function wireKeyboard(selection, handler) {
+      selection.on("keydown", function (event, d) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handler(event, d);
+        }
+      });
+    }
+    wireKeyboard(stageG, function (_e, d) {
+      selection = { type: "stage", id: d.id };
+      highlightStage(d.id);
+      showStageDetail(d);
+    });
+    wireKeyboard(fmG, function (_e, d) {
+      selection = { type: "fm", id: d.id };
+      highlightFM(d.id);
+      showFMDetail(d);
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") clearSelection();
+    });
+
+    // ---------- Tooltip on FM hover ----------
+    const tooltip = d3.select("body").append("div")
+      .style("position", "fixed")
+      .style("pointer-events", "none")
+      .style("background", "#1a2236")
+      .style("color", "#fff")
+      .style("padding", "6px 10px")
+      .style("border-radius", "6px")
+      .style("font-size", "12px")
+      .style("font-family", "var(--ff-sans)")
+      .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
+      .style("opacity", 0)
+      .style("transition", "opacity 140ms ease")
+      .style("z-index", 100);
+
+    fmG.on("mouseenter", function (event, d) {
+        tooltip.html(`<strong>${d.id}</strong> · ${d.name}<br><span style="color:#8893a6">${d.trigger}</span>`)
+          .style("opacity", 1);
+      })
+      .on("mousemove", function (event) {
+        tooltip.style("left", (event.clientX + 12) + "px")
+               .style("top",  (event.clientY + 12) + "px");
+      })
+      .on("mouseleave", function () {
+        tooltip.style("opacity", 0);
+      });
+
+    // ---------- Circuit breaker collapsible ----------
+    const cbPanel = document.getElementById("circuit-breakers");
+    const cbToggle = cbPanel.querySelector(".circuit-breakers__toggle");
+    cbToggle.addEventListener("click", function () {
+      const open = cbPanel.classList.toggle("is-open");
+      cbToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  </script>
+</body>
+</html>
