@@ -461,6 +461,53 @@ Final Conversion: 28% ✅ (beats 25% target)
 
 **Key Insight:** Travel isn't the product — **credit is the product, travel is the wedge.** [**Confidence: High**]
 
+---
+
+## 📁 Portfolio Navigation
+
+The repo is organized as a 0→1 product paper trail — from problem research to the post-pilot scale decision. Each folder contains the artifacts that phase actually produces in a real product org.
+
+### Top-Level Folders
+
+| Folder | What's Inside | Start Here |
+|---|---|---|
+| `01-problem-research/` | User interviews synthesis, JTBD, competitive analysis | `jobs-to-be-done.md` |
+| `02-solution-design/` | 5-stage call flow, voice-GUI orchestration, conversation scripts, proactive triggers | `5-stage-call-flow.md` |
+| `03-ai-architecture/` | Conversational AI stack, NLU intent examples, fallback architecture, human handoff logic | `conversational-ai-stack.md` |
+| `04-mvp-specification/` | PRD, scope in-vs-out, pilot design, edge-cases register | `prd.md` |
+| `05-launch-plan/` | 4-week timeline + 20+ execution artifacts from kickoff through Go/No-Go | `README.md` |
+| `06-impact-projection/` | Business case, 3-year model, competitive moat, post-MVP roadmap | `business-case.md` |
+| `07-appendix/` | Travel-fintech fusion thesis, interview prep, references | `travel-fintech-fusion-thesis.md` |
+
+### The Execution Paper Trail (`05-launch-plan/`)
+
+The launch-plan folder reconstructs what a CTO, PM, and supporting leads actually produce to ship this product. 23 artifacts across 8 phases:
+
+| Phase | Representative Artifact |
+|---|---|
+| **Kickoff** | `engineering-kickoff-agenda.md` — P01–P12 DRIs, decisions, dependency map |
+| **Week −2 Infra** | `load-test-plan-and-results.md` — 10 scenarios, 4 findings carried to Week −1 |
+| **Week −1 Dogfood** | `dogfood-bug-log.md` — 18 issues, Sev-1 response tested at 27 min |
+| **Gate Verification** | `go-live-gate-verification.md` — 18 PRD §7 gates, 7 co-signers |
+| **Parallel Workstreams** | `legal-compliance-package.md`, `ops-dashboard-spec.md`, `human-agent-training-curriculum.md`, `crm-segmentation-500.md` |
+| **Week 1 Exit** | `week-1-exit-review.md` — 5 gates passed; BUG-W1-03 Sev-1 fixed |
+| **Week 7 Decision** | `week-7-go-no-go-memo.md` — GO WITH CONDITIONS; scale to 5,000 × 13 cities |
+| **Retrospective** | `biggest-risks-retrospective.md` — 3 of 4 pre-launch risks contained; STT noise was the real bottleneck |
+
+See `05-launch-plan/README.md` for the full index.
+
+### Suggested Reading Paths
+
+**If you have 5 minutes** → Read the Executive Summary above + `04-mvp-specification/prd.md` §1–2.
+
+**If you have 20 minutes (PM perspective)** → Above + `02-solution-design/5-stage-call-flow.md` + `04-mvp-specification/scope-in-vs-out.md` + `05-launch-plan/week-7-go-no-go-memo.md`.
+
+**If you have 45 minutes (engineering/architecture perspective)** → Above + `03-ai-architecture/conversational-ai-stack.md` + `05-launch-plan/infrastructure-runbook.md` + `05-launch-plan/load-test-plan-and-results.md` + `05-launch-plan/biggest-risks-retrospective.md`.
+
+**If you have 90 minutes (full 0→1 narrative)** → Follow the folder numbers sequentially: 01 → 02 → 03 → 04 → 05 → 06.
+
+---
+
 ## 📌 About This Case Study
 
 ### Why This Demonstrates Senior AI PM Skills
