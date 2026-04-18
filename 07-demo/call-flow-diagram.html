@@ -384,12 +384,41 @@
       #diagram-svg { min-width: 1100px; }
     }
 
+    /* ---------- Keyboard focus ---------- */
+    .stage-node:focus, .fm-node:focus { outline: none; }
+    .stage-node:focus rect,
+    .stage-node:focus-visible rect {
+      stroke: var(--c-accent);
+      stroke-width: 3;
+    }
+    .fm-node:focus rect,
+    .fm-node:focus-visible rect {
+      stroke-width: 3;
+      filter: drop-shadow(0 0 0 2px rgba(0, 186, 242, 0.35));
+    }
+    button:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--c-accent);
+      outline-offset: 2px;
+    }
+
     /* ---------- Print ---------- */
     @media print {
-      body { background: #fff; }
-      .detail-panel, .circuit-breakers { display: none !important; }
-      .app-header { background: #fff; color: var(--c-text); box-shadow: none; border-bottom: 1px solid var(--c-border); }
+      @page { size: landscape; margin: 12mm; }
+      body { background: #fff; color: #000; }
+      .detail-panel { display: none !important; }
+      .circuit-breakers__body { max-height: none !important; }
+      .circuit-breakers__toggle::after { display: none; }
+      .app-header {
+        background: #fff; color: var(--c-text);
+        box-shadow: none; border-bottom: 1px solid var(--c-border);
+        padding: 8px 16px;
+      }
+      .app-header__eyebrow { color: var(--c-stage); }
+      .app-main, .app-footer { padding: 8px 16px; }
       #diagram-container { page-break-inside: avoid; box-shadow: none; }
+      .legend, .circuit-breakers { box-shadow: none; page-break-inside: avoid; }
+      .stage-node rect { filter: none; }
+      .is-dimmed { opacity: 1 !important; }
     }
 
     /* ---------- Entry animation ---------- */
@@ -398,6 +427,23 @@
       to   { opacity: 1; transform: translateY(0); }
     }
     .fade-in { animation: fadeSlide 320ms ease both; }
+
+    @keyframes svgFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    .stage-node, .fm-node, .connector-happy, .connector-fm {
+      animation: svgFadeIn 360ms ease both;
+    }
+
+    /* ---------- Reduced motion ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -886,6 +932,18 @@
         .attr("font-weight", 600)
         .attr("fill", "#00a651")
         .text("OK — natural");
+
+    // ---------- Staggered entry animation (left-to-right) ----------
+    stageG.style("animation-delay", (_d, i) => `${i * 80}ms`);
+    svg.selectAll(".connector-happy").style("animation-delay", (_d, i) => `${40 + i * 80}ms`);
+    fmG.style("animation-delay", d => {
+      // Delay per-stage FMs by their parent stage's position; cross-stage last
+      if (d.primary === "cross") return "720ms";
+      const parentIdx = stages.findIndex(s => s.id === d.primary);
+      const colIdx = perStageFMs.filter(f => f.primary === d.primary).findIndex(f => f.id === d.id);
+      return `${400 + parentIdx * 40 + colIdx * 30}ms`;
+    });
+    svg.selectAll(".connector-fm").style("animation-delay", "500ms");
 
     // ---------- Selection state + highlight logic ----------
     let selection = null; // { type: "stage" | "fm", id: string } | null
