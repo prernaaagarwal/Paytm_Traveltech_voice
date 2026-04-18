@@ -465,11 +465,31 @@
     const STAGE_CY = 200;
 
     const stages = [
-      { id: "stage-1", num: 1, name: "Identity & Intent",      timeRange: "0–15s",   cx: 140  },
-      { id: "stage-2", num: 2, name: "Trip Search",            timeRange: "15–45s",  cx: 400  },
-      { id: "stage-3", num: 3, name: "Booking Confirmation",   timeRange: "45–75s",  cx: 660  },
-      { id: "stage-4", num: 4, name: "GST + Invoice",          timeRange: "75–90s",  cx: 920  },
-      { id: "stage-5", num: 5, name: "Summary & Exit",         timeRange: "90–100s", cx: 1180 }
+      { id: "stage-1", num: 1, name: "Identity & Intent",      timeRange: "0–15s",   cx: 140,
+        desc: "Merchant calls → IVR welcome → AI agent picks up. KYC lookup fires in background (<200ms): phone → merchant name, city, GSTIN, credit balance.",
+        waCard: "Welcome card: \"Booking assistant is live\" + [View Options →]",
+        apis: ["Merchant KYC API (<300ms)", "Credit Balance API (<300ms)"],
+        exit: ["Merchant identity confirmed", "WhatsApp companion sent", "Travel intent captured"] },
+      { id: "stage-2", num: 2, name: "Trip Search",            timeRange: "15–45s",  cx: 400,
+        desc: "Agent extracts trip intent via NLU slot-filling (origin, destination, date, passengers). Real-time flight search returns top 2 options ranked by price (40%), time-match (30%), reliability (20%).",
+        waCard: "Flight option cards: airline, time, duration, price, [Select →] button",
+        apis: ["NLU Service — intent + entity extraction (<150ms)", "Paytm Travel API — GET /flights (<3s p95)"],
+        exit: ["Origin, destination, date confirmed", "Flights retrieved", "2 options presented (voice + WA)"] },
+      { id: "stage-3", num: 3, name: "Booking Confirmation",   timeRange: "45–75s",  cx: 660,
+        desc: "Merchant selects flight option, chooses payment method (Paytm Credit or Wallet). Agent reads back details for verbal confirmation, then fires booking API.",
+        waCard: "Payment confirmation card: selected flight + payment method + balance + auto-filled passenger/GSTIN",
+        apis: ["Paytm Credit API (<500ms)", "Wallet API (<300ms)", "Booking API (<5s)"],
+        exit: ["Flight option selected", "Payment method chosen", "Verbal confirmation received", "Booking API returns PNR"] },
+      { id: "stage-4", num: 4, name: "GST + Invoice",          timeRange: "75–90s",  cx: 920,
+        desc: "PNR generated. GSTIN validated against GST Portal. Invoice PDF rendered and delivered to WhatsApp along with e-ticket.",
+        waCard: "Booking confirmed card: PNR, flight details, payment charged, remaining credit, invoice PDF [Download], e-ticket [Download]",
+        apis: ["GST Portal API (<2s)", "PDF Rendering Service (<3s)", "WhatsApp Business API (<200ms)"],
+        exit: ["PNR generated", "GSTIN validated", "Invoice PDF delivered to WhatsApp"] },
+      { id: "stage-5", num: 5, name: "Summary & Exit",         timeRange: "90–100s", cx: 1180,
+        desc: "Agent recaps booking: flight, time, PNR, total paid, remaining credit. Clean call termination. Post-call analytics events fire.",
+        waCard: "Post-call summary: Booking ID, [Change/Cancel], [Return Flight], [Call Support], [Rate Experience]",
+        apis: ["Analytics Event Bus (<50ms)"],
+        exit: ["Booking details recapped", "Call terminated cleanly", "Analytics events fired", "CSAT prompt queued"] }
     ];
 
     // ---------- SVG setup ----------
@@ -836,51 +856,87 @@
       hideDetailPanel();
     }
 
-    // ---------- Detail panel stub (populated in next step) ----------
+    // ---------- Detail panel ----------
     const detailPanel = document.getElementById("detail-panel");
 
-    function showStageDetail(stage) {
-      detailPanel.hidden = false;
-      detailPanel.innerHTML =
-        `<div class="detail-panel__header">` +
-        `<span class="detail-panel__badge">STAGE ${stage.num}</span>` +
-        `<div><div class="detail-panel__title">${stage.name}</div>` +
-        `<div class="detail-panel__subtitle">Time budget · ${stage.timeRange}</div></div>` +
+    function panelHeader(badge, title, subtitle) {
+      return `<div class="detail-panel__header">` +
+        `<span class="detail-panel__badge">${badge}</span>` +
+        `<div><div class="detail-panel__title">${title}</div>` +
+        `<div class="detail-panel__subtitle">${subtitle}</div></div>` +
         `<button class="detail-panel__close" aria-label="Close" data-close>✕</button>` +
-        `</div>` +
-        `<div class="detail-panel__body">` +
-        `<div class="detail-panel__section"><div class="detail-panel__label">Failure modes at this stage</div>` +
-        failureModes.filter(f => f.stages.includes(stage.id))
-          .map(f => `<span class="detail-panel__badge" style="margin:2px 4px 2px 0;cursor:pointer;" data-fm-link="${f.id}">${f.id}</span>`)
-          .join("") +
-        `</div></div>`;
+        `</div>`;
+    }
+
+    function section(label, content) {
+      return `<div class="detail-panel__section"><div class="detail-panel__label">${label}</div>${content}</div>`;
+    }
+
+    function showStageDetail(stage) {
+      const stageFMs = failureModes.filter(f => f.stages.includes(stage.id));
+
+      let body = "";
+      body += section("What happens", `<div>${stage.desc}</div>`);
+
+      body += section("WhatsApp companion", `<div style="background:var(--c-surface-alt);border:1px solid var(--c-border);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;color:var(--c-text-muted)">${stage.waCard}</div>`);
+
+      body += section("APIs called", `<div style="display:flex;flex-direction:column;gap:4px">` +
+        stage.apis.map(api => `<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:6px;height:6px;border-radius:50%;background:var(--c-ok);flex-shrink:0"></span>${api}</div>`).join("") +
+        `</div>`);
+
+      body += section("Exit criteria",
+        `<div style="display:flex;flex-direction:column;gap:3px">` +
+        stage.exit.map(e => `<div style="display:flex;align-items:baseline;gap:6px;font-size:12px"><span style="color:var(--c-ok);font-weight:700">✓</span>${e}</div>`).join("") +
+        `</div>`);
+
+      body += section(`Failure modes (${stageFMs.length})`,
+        stageFMs.map(f => {
+          const catColor = { voice: "var(--c-voice)", nlu: "var(--c-nlu)", api: "var(--c-api)", ok: "var(--c-ok)" }[f.cat];
+          return `<span class="detail-panel__badge" style="margin:2px 4px 2px 0;cursor:pointer;border-color:${catColor}" data-fm-link="${f.id}">${f.id}</span>`;
+        }).join(""));
+
+      detailPanel.hidden = false;
+      detailPanel.innerHTML = panelHeader(`STAGE ${stage.num}`, stage.name, `Time budget · ${stage.timeRange}`) +
+        `<div class="detail-panel__body">${body}</div>`;
     }
 
     function showFMDetail(fm) {
       const parentNames = fm.stages.map(sid => {
         const st = stages.find(s => s.id === sid);
-        return st ? `S${st.num}` : sid;
-      }).join(" · ");
+        return st ? `Stage ${st.num}` : sid;
+      }).join(", ");
       const catLabel = { voice: "Voice / STT", nlu: "NLU", api: "API / Backend", ok: "Natural behavior" }[fm.cat];
+      const catColor = { voice: "var(--c-voice)", nlu: "var(--c-nlu)", api: "var(--c-api)", ok: "var(--c-ok)" }[fm.cat];
 
-      detailPanel.hidden = false;
-      detailPanel.innerHTML =
-        `<div class="detail-panel__header">` +
-        `<span class="detail-panel__badge">${fm.id}</span>` +
-        `<div><div class="detail-panel__title">${fm.name}</div>` +
-        `<div class="detail-panel__subtitle">${catLabel} · ${parentNames}</div></div>` +
-        `<button class="detail-panel__close" aria-label="Close" data-close>✕</button>` +
-        `</div>` +
-        `<div class="detail-panel__body">` +
-        `<div class="detail-panel__section"><div class="detail-panel__label">Trigger</div><div>${fm.trigger}</div></div>` +
-        `<div class="detail-panel__section"><div class="detail-panel__label">Frequency</div>` +
-        `<div class="freq-bar"><div class="freq-bar__track"><div class="freq-bar__fill" style="width:${Math.min(fm.freq * 5, 100)}%"></div></div><span>~${fm.freq}%</span></div></div>` +
-        `<div class="detail-panel__section"><div class="detail-panel__label">Recovery cascade</div>` +
-        fm.recovery.map(step => {
+      let body = "";
+
+      body += section("Trigger", `<div>${fm.trigger}</div>`);
+
+      body += section("Frequency",
+        `<div class="freq-bar"><div class="freq-bar__track"><div class="freq-bar__fill" style="width:${Math.min(fm.freq * 5, 100)}%"></div></div><span>~${fm.freq}%</span></div>`);
+
+      body += section("Recovery cascade",
+        `<div style="display:flex;flex-direction:column;gap:6px">` +
+        fm.recovery.map((step, i) => {
           const chLabel = { voice: "VOICE", wa: "WHATSAPP", sms: "SMS", human: "HUMAN" }[step.ch];
-          return `<div class="recovery-step recovery-step--${step.ch}"><span class="recovery-step__channel">${chLabel}</span><span class="recovery-step__text">${step.text}</span></div>`;
+          return `<div class="recovery-step recovery-step--${step.ch}">` +
+            `<span style="font-family:var(--ff-mono);font-size:10px;color:var(--c-text-soft);width:14px;flex-shrink:0">${i + 1}.</span>` +
+            `<span class="recovery-step__channel">${chLabel}</span>` +
+            `<span class="recovery-step__text">${step.text}</span></div>`;
         }).join("") +
-        `</div></div>`;
+        `</div>`);
+
+      body += section("Applies to",
+        fm.stages.map(sid => {
+          const st = stages.find(s => s.id === sid);
+          if (!st) return "";
+          return `<span class="detail-panel__badge" style="margin:2px 4px 2px 0;cursor:pointer" data-stage-link="${st.id}">S${st.num}: ${st.name}</span>`;
+        }).join(""));
+
+      const badgeStyle = `background:${catColor};color:#fff;border-color:${catColor}`;
+      detailPanel.hidden = false;
+      detailPanel.innerHTML = panelHeader(`<span style="${badgeStyle}">${fm.id}</span>`, fm.name, `${catLabel} · ${parentNames}`) +
+        `<div class="detail-panel__body">${body}</div>`;
     }
 
     function hideDetailPanel() {
@@ -915,6 +971,17 @@
           selection = { type: "fm", id: fm.id };
           highlightFM(fm.id);
           showFMDetail(fm);
+        }
+        return;
+      }
+      const stageLink = e.target.closest("[data-stage-link]");
+      if (stageLink) {
+        const sid = stageLink.getAttribute("data-stage-link");
+        const st = stages.find(s => s.id === sid);
+        if (st) {
+          selection = { type: "stage", id: st.id };
+          highlightStage(st.id);
+          showStageDetail(st);
         }
       }
     });
