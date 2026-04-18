@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive visualization of the Paytm Merchant Travel Desk voice agent's 5-stage call flow with 18 failure modes and recovery paths." />
+  <title>Paytm Voice Agent — Call Flow Diagram</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* CSS block — populated in Step 3 */
+  </style>
+</head>
+<body>
+  <noscript>
+    <div style="padding:24px;font-family:system-ui,sans-serif;max-width:600px;margin:40px auto;border:1px solid #ddd;border-radius:8px;">
+      <h2>JavaScript required</h2>
+      <p>This interactive diagram needs JavaScript and network access to load D3.js from its CDN. Please enable JavaScript and refresh the page.</p>
+    </div>
+  </noscript>
+
+  <header class="app-header">
+    <div class="app-header__inner">
+      <div class="app-header__title">
+        <span class="app-header__eyebrow">Paytm Merchant Travel Desk</span>
+        <h1>5-Stage Call Flow &amp; Failure Modes</h1>
+      </div>
+      <div class="app-header__meta">
+        <span>Voice-first booking · 100s target · 18 failure modes</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section id="time-budget-bar" aria-label="Call time budget">
+      <!-- Time budget bar — populated in Step 5 -->
+    </section>
+
+    <section id="diagram-container" aria-label="Call flow diagram">
+      <svg id="diagram-svg" viewBox="0 0 1400 900" role="img" aria-label="5-stage call flow with failure modes">
+        <!-- SVG diagram — populated in Steps 6–7 -->
+      </svg>
+    </section>
+
+    <aside id="detail-panel" class="detail-panel" aria-live="polite" hidden>
+      <!-- Detail panel — populated in Step 9 -->
+    </aside>
+  </main>
+
+  <footer class="app-footer">
+    <div id="legend" class="legend" aria-label="Legend">
+      <!-- Legend — populated in Step 10 -->
+    </div>
+
+    <div id="circuit-breakers" class="circuit-breakers" aria-label="Circuit breaker patterns">
+      <!-- Circuit breaker panel — populated in Step 11 -->
+    </div>
+  </footer>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    // Bootstrap check — fails loudly if D3 did not load from the CDN
+    (function () {
+      if (typeof window.d3 === 'undefined') {
+        document.body.innerHTML =
+          '<div style="padding:24px;font-family:system-ui,sans-serif;max-width:600px;margin:40px auto;border:1px solid #ddd;border-radius:8px;">' +
+          '<h2>Unable to load D3.js</h2>' +
+          '<p>This page loads D3.js v7 from <code>https://d3js.org/d3.v7.min.js</code>. Check your internet connection and reload.</p>' +
+          '</div>';
+      }
+    })();
+
+    // Data + rendering — populated in Steps 4–12
+  </script>
+</body>
+</html>
