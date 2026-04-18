@@ -438,7 +438,36 @@
 
   <footer class="app-footer">
     <div id="legend" class="legend" aria-label="Legend">
-      <!-- Legend — populated in Step 10 -->
+      <div class="legend__title">Legend</div>
+      <div class="legend__items">
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--stage" aria-hidden="true"></span>
+          <span>Call stage</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--voice" aria-hidden="true"></span>
+          <span>Voice / STT failure</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--nlu" aria-hidden="true"></span>
+          <span>NLU failure</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--api" aria-hidden="true"></span>
+          <span>API / backend failure</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--ok" aria-hidden="true"></span>
+          <span>Natural behavior (not a failure)</span>
+        </div>
+        <div class="legend__item">
+          <span class="legend__swatch legend__swatch--cross" aria-hidden="true"></span>
+          <span>Cross-stage (dashed)</span>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--c-border);font-size:11.5px;color:var(--c-text-muted);line-height:1.6">
+        <strong style="color:var(--c-text)">Tip:</strong> Click any stage to see its time budget, APIs, and failure modes. Click a failure mode to see its trigger, frequency, and recovery cascade.
+      </div>
     </div>
 
     <div id="circuit-breakers" class="circuit-breakers" aria-label="Circuit breaker patterns">
