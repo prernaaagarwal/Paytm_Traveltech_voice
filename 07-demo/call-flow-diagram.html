@@ -459,7 +459,119 @@
       }
     })();
 
-    // Data + rendering — populated in Steps 4–12
+    // ---------- Stage data (minimal) ----------
+    const STAGE_W = 200;
+    const STAGE_H = 100;
+    const STAGE_CY = 200;
+
+    const stages = [
+      { id: "stage-1", num: 1, name: "Identity & Intent",      timeRange: "0–15s",   cx: 140  },
+      { id: "stage-2", num: 2, name: "Trip Search",            timeRange: "15–45s",  cx: 400  },
+      { id: "stage-3", num: 3, name: "Booking Confirmation",   timeRange: "45–75s",  cx: 660  },
+      { id: "stage-4", num: 4, name: "GST + Invoice",          timeRange: "75–90s",  cx: 920  },
+      { id: "stage-5", num: 5, name: "Summary & Exit",         timeRange: "90–100s", cx: 1180 }
+    ];
+
+    // ---------- SVG setup ----------
+    const svg = d3.select("#diagram-svg");
+
+    const defs = svg.append("defs");
+    defs.append("marker")
+      .attr("id", "arrow-happy")
+      .attr("viewBox", "0 0 10 10")
+      .attr("refX", 9)
+      .attr("refY", 5)
+      .attr("markerWidth", 8)
+      .attr("markerHeight", 8)
+      .attr("orient", "auto-start-reverse")
+      .append("path")
+        .attr("d", "M0,0 L10,5 L0,10 z")
+        .attr("fill", "var(--c-accent)");
+
+    // ---------- Happy-path connectors (rendered first so stages cover edges) ----------
+    const connectorsLayer = svg.append("g").attr("class", "connectors-layer");
+
+    for (let i = 0; i < stages.length - 1; i++) {
+      const a = stages[i];
+      const b = stages[i + 1];
+      const x1 = a.cx + STAGE_W / 2;
+      const x2 = b.cx - STAGE_W / 2 - 4;
+      connectorsLayer.append("path")
+        .attr("class", "connector-happy")
+        .attr("d", `M${x1},${STAGE_CY} L${x2},${STAGE_CY}`);
+    }
+
+    // ---------- Stage nodes ----------
+    const stagesLayer = svg.append("g").attr("class", "stages-layer");
+
+    const stageG = stagesLayer.selectAll("g.stage-node")
+      .data(stages, d => d.id)
+      .join("g")
+        .attr("class", "stage-node")
+        .attr("transform", d => `translate(${d.cx - STAGE_W / 2}, ${STAGE_CY - STAGE_H / 2})`)
+        .attr("tabindex", 0)
+        .attr("role", "button")
+        .attr("aria-label", d => `Stage ${d.num}: ${d.name}, ${d.timeRange}`);
+
+    stageG.append("rect")
+      .attr("width", STAGE_W)
+      .attr("height", STAGE_H)
+      .attr("rx", 12)
+      .attr("ry", 12);
+
+    // Stage number pill
+    stageG.append("circle")
+      .attr("cx", 18)
+      .attr("cy", 18)
+      .attr("r", 12)
+      .attr("fill", "rgba(255,255,255,0.16)")
+      .attr("stroke", "rgba(255,255,255,0.35)")
+      .attr("stroke-width", 1);
+    stageG.append("text")
+      .attr("x", 18)
+      .attr("y", 18)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "central")
+      .attr("font-size", 11)
+      .attr("font-weight", 700)
+      .attr("fill", "#fff")
+      .text(d => d.num);
+
+    // Stage name (supports 2-line wrapping for long names)
+    stageG.each(function (d) {
+      const g = d3.select(this);
+      const words = d.name.split(" ");
+      // Simple heuristic: wrap at first space if name is long
+      let lines = [d.name];
+      if (d.name.length > 14) {
+        const mid = Math.ceil(words.length / 2);
+        lines = [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+      }
+      const nameY = STAGE_H / 2 - 4 - (lines.length - 1) * 8;
+      lines.forEach((line, i) => {
+        g.append("text")
+          .attr("x", STAGE_W / 2)
+          .attr("y", nameY + i * 16)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "central")
+          .attr("font-size", 14)
+          .attr("font-weight", 600)
+          .attr("fill", "#fff")
+          .text(line);
+      });
+    });
+
+    // Time range (below the name)
+    stageG.append("text")
+      .attr("x", STAGE_W / 2)
+      .attr("y", STAGE_H - 18)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "central")
+      .attr("font-size", 11)
+      .attr("font-weight", 500)
+      .attr("fill", "rgba(255,255,255,0.78)")
+      .attr("letter-spacing", "0.03em")
+      .text(d => d.timeRange);
   </script>
 </body>
 </html>
