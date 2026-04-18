@@ -14,7 +14,390 @@
   />
 
   <style>
-    /* CSS block — populated in Step 3 */
+    /* ---------- Design tokens ---------- */
+    :root {
+      --c-bg: #f5f7fa;
+      --c-surface: #ffffff;
+      --c-surface-alt: #fafbfd;
+      --c-border: #e4e8ef;
+      --c-border-strong: #cdd4e0;
+      --c-text: #1a2236;
+      --c-text-muted: #5b6577;
+      --c-text-soft: #8893a6;
+
+      /* Paytm palette */
+      --c-stage: #002970;
+      --c-stage-hover: #003a9b;
+      --c-accent: #00baf2;
+
+      /* Failure categories */
+      --c-voice: #f7941d;
+      --c-nlu: #7b61ff;
+      --c-api: #d62b2b;
+      --c-cross: #6b7280;
+      --c-ok: #00a651;
+
+      /* Channel badges */
+      --c-ch-voice: #00a651;
+      --c-ch-wa: #25d366;
+      --c-ch-sms: #5b8def;
+      --c-ch-human: #f7941d;
+
+      --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+      --shadow-2: 0 4px 8px rgba(16, 24, 40, 0.08), 0 12px 24px rgba(16, 24, 40, 0.08);
+      --shadow-panel: 0 -4px 24px rgba(16, 24, 40, 0.08);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+
+      --ff-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --ff-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    }
+
+    /* ---------- Base reset ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--ff-sans);
+      color: var(--c-text);
+      background: var(--c-bg);
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    h1, h2, h3, h4, p { margin: 0; }
+    button {
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* ---------- Header ---------- */
+    .app-header {
+      background: linear-gradient(135deg, var(--c-stage) 0%, #001a48 100%);
+      color: #fff;
+      padding: 20px 28px;
+      box-shadow: var(--shadow-1);
+    }
+    .app-header__inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .app-header__eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--c-accent);
+      margin-bottom: 4px;
+    }
+    .app-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .app-header__meta {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.72);
+      font-weight: 500;
+    }
+
+    /* ---------- Main layout ---------- */
+    .app-main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 20px 28px 24px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    /* ---------- Time budget bar ---------- */
+    #time-budget-bar {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-1);
+    }
+
+    /* ---------- Diagram canvas ---------- */
+    #diagram-container {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-1);
+      overflow: hidden;
+      position: relative;
+    }
+    #diagram-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      background:
+        radial-gradient(circle at 1px 1px, rgba(16, 24, 40, 0.05) 1px, transparent 0) 0 0 / 24px 24px,
+        var(--c-surface);
+    }
+
+    /* SVG node styles (applied via classes in Steps 6–7) */
+    .stage-node rect {
+      fill: var(--c-stage);
+      stroke: transparent;
+      stroke-width: 2;
+      filter: drop-shadow(0 2px 4px rgba(0, 41, 112, 0.25));
+      transition: fill 180ms ease, stroke 180ms ease, transform 180ms ease;
+      cursor: pointer;
+    }
+    .stage-node:hover rect { fill: var(--c-stage-hover); }
+    .stage-node.is-selected rect { stroke: var(--c-accent); stroke-width: 3; }
+    .stage-node text { fill: #fff; pointer-events: none; }
+
+    .fm-node rect {
+      fill: #fff;
+      stroke-width: 1.5;
+      transition: transform 180ms ease, stroke-width 180ms ease;
+      cursor: pointer;
+    }
+    .fm-node--voice rect { stroke: var(--c-voice); }
+    .fm-node--nlu rect   { stroke: var(--c-nlu); }
+    .fm-node--api rect   { stroke: var(--c-api); }
+    .fm-node--ok rect    { stroke: var(--c-ok); }
+    .fm-node--cross rect { stroke-dasharray: 4 3; stroke: var(--c-cross); }
+    .fm-node:hover rect  { stroke-width: 2.5; }
+    .fm-node.is-selected rect { stroke-width: 3; filter: drop-shadow(0 2px 6px rgba(16, 24, 40, 0.18)); }
+    .fm-node text { pointer-events: none; }
+    .fm-node .fm-id { font-family: var(--ff-mono); font-size: 10px; font-weight: 600; }
+
+    .connector-happy {
+      fill: none;
+      stroke: var(--c-accent);
+      stroke-width: 2.5;
+      marker-end: url(#arrow-happy);
+      transition: opacity 180ms ease;
+    }
+    .connector-fm {
+      fill: none;
+      stroke: var(--c-border-strong);
+      stroke-width: 1.25;
+      stroke-dasharray: 3 3;
+      transition: stroke 180ms ease, opacity 180ms ease;
+    }
+    .connector-fm.is-active { stroke: var(--c-accent); stroke-dasharray: none; stroke-width: 2; }
+
+    .is-dimmed { opacity: 0.28; }
+
+    /* ---------- Detail panel ---------- */
+    .detail-panel {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: min(420px, calc(100vw - 48px));
+      max-height: calc(100vh - 48px);
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(8px);
+      opacity: 0;
+      transition: transform 220ms ease, opacity 220ms ease;
+      z-index: 50;
+    }
+    .detail-panel:not([hidden]) { opacity: 1; transform: translateY(0); }
+    .detail-panel__header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--c-border);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .detail-panel__badge {
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--c-surface-alt);
+      border: 1px solid var(--c-border);
+      color: var(--c-text-muted);
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .detail-panel__close {
+      margin-left: auto;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      color: var(--c-text-soft);
+      display: grid;
+      place-items: center;
+    }
+    .detail-panel__close:hover { background: var(--c-surface-alt); color: var(--c-text); }
+    .detail-panel__title { font-size: 16px; font-weight: 700; letter-spacing: -0.005em; }
+    .detail-panel__subtitle { font-size: 12px; color: var(--c-text-muted); margin-top: 2px; }
+    .detail-panel__body {
+      padding: 16px 20px 20px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    .detail-panel__section { margin-bottom: 14px; }
+    .detail-panel__section:last-child { margin-bottom: 0; }
+    .detail-panel__label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-text-soft);
+      margin-bottom: 4px;
+    }
+
+    /* Recovery cascade */
+    .recovery-step {
+      display: flex;
+      gap: 10px;
+      padding: 8px 10px;
+      border-left: 3px solid var(--c-border-strong);
+      margin-bottom: 6px;
+      background: var(--c-surface-alt);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .recovery-step__channel {
+      font-family: var(--ff-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #fff;
+      height: fit-content;
+      flex-shrink: 0;
+    }
+    .recovery-step--voice  .recovery-step__channel { background: var(--c-ch-voice); }
+    .recovery-step--wa     .recovery-step__channel { background: var(--c-ch-wa); }
+    .recovery-step--sms    .recovery-step__channel { background: var(--c-ch-sms); }
+    .recovery-step--human  .recovery-step__channel { background: var(--c-ch-human); }
+    .recovery-step__text   { font-size: 12.5px; color: var(--c-text); }
+
+    .freq-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .freq-bar__track {
+      flex: 1;
+      height: 6px;
+      background: var(--c-surface-alt);
+      border: 1px solid var(--c-border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .freq-bar__fill { height: 100%; background: var(--c-accent); }
+
+    /* ---------- Footer ---------- */
+    .app-footer {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 28px 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .legend, .circuit-breakers {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-1);
+    }
+    .legend__title, .circuit-breakers__title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-text-soft);
+      margin-bottom: 10px;
+    }
+    .legend__items { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+    .legend__item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+    .legend__swatch {
+      width: 14px; height: 14px; border-radius: 4px;
+      border: 1.5px solid; background: #fff;
+    }
+    .legend__swatch--stage { background: var(--c-stage); border-color: var(--c-stage); }
+    .legend__swatch--voice { border-color: var(--c-voice); }
+    .legend__swatch--nlu   { border-color: var(--c-nlu); }
+    .legend__swatch--api   { border-color: var(--c-api); }
+    .legend__swatch--ok    { border-color: var(--c-ok); }
+    .legend__swatch--cross { border-color: var(--c-cross); border-style: dashed; }
+
+    .circuit-breakers__toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      color: var(--c-text);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .circuit-breakers__toggle::after {
+      content: "▸";
+      margin-left: auto;
+      transition: transform 160ms ease;
+      color: var(--c-text-soft);
+    }
+    .circuit-breakers.is-open .circuit-breakers__toggle::after { transform: rotate(90deg); }
+    .circuit-breakers__body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 220ms ease;
+    }
+    .circuit-breakers.is-open .circuit-breakers__body { max-height: 600px; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1200px) {
+      .detail-panel {
+        right: 16px;
+        left: 16px;
+        bottom: 16px;
+        width: auto;
+        max-height: 60vh;
+      }
+      .app-footer { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 900px) {
+      .app-header h1 { font-size: 18px; }
+      .app-main, .app-footer { padding-left: 16px; padding-right: 16px; }
+      #diagram-container { overflow-x: auto; }
+      #diagram-svg { min-width: 1100px; }
+    }
+
+    /* ---------- Print ---------- */
+    @media print {
+      body { background: #fff; }
+      .detail-panel, .circuit-breakers { display: none !important; }
+      .app-header { background: #fff; color: var(--c-text); box-shadow: none; border-bottom: 1px solid var(--c-border); }
+      #diagram-container { page-break-inside: avoid; box-shadow: none; }
+    }
+
+    /* ---------- Entry animation ---------- */
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeSlide 320ms ease both; }
   </style>
 </head>
 <body>
