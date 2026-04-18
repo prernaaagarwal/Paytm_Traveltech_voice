@@ -769,6 +769,213 @@
         .attr("font-weight", 600)
         .attr("fill", "#00a651")
         .text("OK — natural");
+
+    // ---------- Selection state + highlight logic ----------
+    let selection = null; // { type: "stage" | "fm", id: string } | null
+
+    function clearHighlights() {
+      svg.selectAll(".is-selected").classed("is-selected", false);
+      svg.selectAll(".is-dimmed").classed("is-dimmed", false);
+      svg.selectAll(".connector-fm").classed("is-active", false);
+      svg.selectAll(".connector-fm--cross").attr("opacity", 0.35);
+    }
+
+    function highlightStage(stageId) {
+      clearHighlights();
+      const connectedFMs = failureModes.filter(f => f.stages.includes(stageId));
+      const connectedFMIds = new Set(connectedFMs.map(f => f.id));
+
+      // Dim non-connected stages
+      stageG.classed("is-dimmed", s => s.id !== stageId);
+      stageG.filter(s => s.id === stageId).classed("is-selected", true);
+
+      // Dim non-connected FMs; highlight connected ones
+      fmG.classed("is-dimmed", f => !connectedFMIds.has(f.id));
+
+      // Activate relevant connector curves
+      svg.selectAll(".connector-fm")
+        .classed("is-active", function () {
+          const fmId = this.getAttribute("data-fm");
+          const sId = this.getAttribute("data-stage");
+          return sId === stageId && connectedFMIds.has(fmId);
+        });
+      // Fade cross-connectors not bound to this stage
+      svg.selectAll(".connector-fm--cross")
+        .attr("opacity", function () {
+          return this.getAttribute("data-stage") === stageId ? 0.8 : 0.08;
+        });
+    }
+
+    function highlightFM(fmId) {
+      clearHighlights();
+      const fm = failureModes.find(f => f.id === fmId);
+      if (!fm) return;
+      const parentStageIds = new Set(fm.stages);
+
+      // Dim non-parent stages
+      stageG.classed("is-dimmed", s => !parentStageIds.has(s.id));
+
+      // Dim all other FMs; highlight this FM
+      fmG.classed("is-dimmed", f => f.id !== fmId);
+      fmG.filter(f => f.id === fmId).classed("is-selected", true);
+
+      // Activate connectors bound to this FM
+      svg.selectAll(".connector-fm")
+        .classed("is-active", function () {
+          return this.getAttribute("data-fm") === fmId;
+        });
+      svg.selectAll(".connector-fm--cross")
+        .attr("opacity", function () {
+          return this.getAttribute("data-fm") === fmId ? 0.8 : 0.08;
+        });
+    }
+
+    function clearSelection() {
+      selection = null;
+      clearHighlights();
+      hideDetailPanel();
+    }
+
+    // ---------- Detail panel stub (populated in next step) ----------
+    const detailPanel = document.getElementById("detail-panel");
+
+    function showStageDetail(stage) {
+      detailPanel.hidden = false;
+      detailPanel.innerHTML =
+        `<div class="detail-panel__header">` +
+        `<span class="detail-panel__badge">STAGE ${stage.num}</span>` +
+        `<div><div class="detail-panel__title">${stage.name}</div>` +
+        `<div class="detail-panel__subtitle">Time budget · ${stage.timeRange}</div></div>` +
+        `<button class="detail-panel__close" aria-label="Close" data-close>✕</button>` +
+        `</div>` +
+        `<div class="detail-panel__body">` +
+        `<div class="detail-panel__section"><div class="detail-panel__label">Failure modes at this stage</div>` +
+        failureModes.filter(f => f.stages.includes(stage.id))
+          .map(f => `<span class="detail-panel__badge" style="margin:2px 4px 2px 0;cursor:pointer;" data-fm-link="${f.id}">${f.id}</span>`)
+          .join("") +
+        `</div></div>`;
+    }
+
+    function showFMDetail(fm) {
+      const parentNames = fm.stages.map(sid => {
+        const st = stages.find(s => s.id === sid);
+        return st ? `S${st.num}` : sid;
+      }).join(" · ");
+      const catLabel = { voice: "Voice / STT", nlu: "NLU", api: "API / Backend", ok: "Natural behavior" }[fm.cat];
+
+      detailPanel.hidden = false;
+      detailPanel.innerHTML =
+        `<div class="detail-panel__header">` +
+        `<span class="detail-panel__badge">${fm.id}</span>` +
+        `<div><div class="detail-panel__title">${fm.name}</div>` +
+        `<div class="detail-panel__subtitle">${catLabel} · ${parentNames}</div></div>` +
+        `<button class="detail-panel__close" aria-label="Close" data-close>✕</button>` +
+        `</div>` +
+        `<div class="detail-panel__body">` +
+        `<div class="detail-panel__section"><div class="detail-panel__label">Trigger</div><div>${fm.trigger}</div></div>` +
+        `<div class="detail-panel__section"><div class="detail-panel__label">Frequency</div>` +
+        `<div class="freq-bar"><div class="freq-bar__track"><div class="freq-bar__fill" style="width:${Math.min(fm.freq * 5, 100)}%"></div></div><span>~${fm.freq}%</span></div></div>` +
+        `<div class="detail-panel__section"><div class="detail-panel__label">Recovery cascade</div>` +
+        fm.recovery.map(step => {
+          const chLabel = { voice: "VOICE", wa: "WHATSAPP", sms: "SMS", human: "HUMAN" }[step.ch];
+          return `<div class="recovery-step recovery-step--${step.ch}"><span class="recovery-step__channel">${chLabel}</span><span class="recovery-step__text">${step.text}</span></div>`;
+        }).join("") +
+        `</div></div>`;
+    }
+
+    function hideDetailPanel() {
+      detailPanel.hidden = true;
+      detailPanel.innerHTML = "";
+    }
+
+    // ---------- Event wiring ----------
+    stageG.on("click", function (_event, d) {
+      selection = { type: "stage", id: d.id };
+      highlightStage(d.id);
+      showStageDetail(d);
+    });
+
+    fmG.on("click", function (_event, d) {
+      selection = { type: "fm", id: d.id };
+      highlightFM(d.id);
+      showFMDetail(d);
+    });
+
+    // Delegated close + FM-link inside detail panel
+    detailPanel.addEventListener("click", function (e) {
+      if (e.target.closest("[data-close]")) {
+        clearSelection();
+        return;
+      }
+      const fmLink = e.target.closest("[data-fm-link]");
+      if (fmLink) {
+        const fmId = fmLink.getAttribute("data-fm-link");
+        const fm = failureModes.find(f => f.id === fmId);
+        if (fm) {
+          selection = { type: "fm", id: fm.id };
+          highlightFM(fm.id);
+          showFMDetail(fm);
+        }
+      }
+    });
+
+    // Click on empty SVG background clears selection
+    svg.on("click", function (event) {
+      if (event.target === this || event.target.tagName === "g" && !event.target.classList.length) {
+        clearSelection();
+      }
+    });
+
+    // Keyboard: Enter/Space activates focused node, Escape clears
+    function wireKeyboard(selection, handler) {
+      selection.on("keydown", function (event, d) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handler(event, d);
+        }
+      });
+    }
+    wireKeyboard(stageG, function (_e, d) {
+      selection = { type: "stage", id: d.id };
+      highlightStage(d.id);
+      showStageDetail(d);
+    });
+    wireKeyboard(fmG, function (_e, d) {
+      selection = { type: "fm", id: d.id };
+      highlightFM(d.id);
+      showFMDetail(d);
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") clearSelection();
+    });
+
+    // ---------- Tooltip on FM hover ----------
+    const tooltip = d3.select("body").append("div")
+      .style("position", "fixed")
+      .style("pointer-events", "none")
+      .style("background", "#1a2236")
+      .style("color", "#fff")
+      .style("padding", "6px 10px")
+      .style("border-radius", "6px")
+      .style("font-size", "12px")
+      .style("font-family", "var(--ff-sans)")
+      .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
+      .style("opacity", 0)
+      .style("transition", "opacity 140ms ease")
+      .style("z-index", 100);
+
+    fmG.on("mouseenter", function (event, d) {
+        tooltip.html(`<strong>${d.id}</strong> · ${d.name}<br><span style="color:#8893a6">${d.trigger}</span>`)
+          .style("opacity", 1);
+      })
+      .on("mousemove", function (event) {
+        tooltip.style("left", (event.clientX + 12) + "px")
+               .style("top",  (event.clientY + 12) + "px");
+      })
+      .on("mouseleave", function () {
+        tooltip.style("opacity", 0);
+      });
   </script>
 </body>
 </html>
