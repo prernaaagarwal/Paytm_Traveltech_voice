@@ -278,36 +278,6 @@ Paytm is positioned to **own this segment with zero competition** because replic
 | **Call drops mid-booking** | 5% | Connection lost | SMS: "Booking pending ₹3,800. Continue: [link]" | Resume at last stage |
 ---
 
-## Competitive Landscape
-
-### Why No One Else Owns This Space
-
-**Enterprise Tools (MMT for Business, Cleartrip Corporate):**
-- Target: 50+ employee companies
-- Min contract: ₹10L/year + IT integration
-- **Miss SMBs** — kirana owners can't sign ₹10L deals
-
-**Consumer OTAs (MMT, Goibibo):**
-- No GST auto-generation (merchants screenshot & edit)
-- No business credit integration
-- Treat merchants like leisure travelers
-
-**Fintech Players (PhonePe, Razorpay):**
-- Have merchant relationships, payments
-- **Missing:** Travel inventory, GST invoicing
-- Would take 18 months to build
-
-### Paytm's Unique Stack
-Only company with **all 4 pieces operational:**
-1. 30M merchant KYC + GSTIN
-2. Paytm Business Credit (₹5-50K lines)
-3. GST invoice infrastructure
-4. Travel inventory (Amadeus partnerships)
-
-**Replication Time for Competitors:** 2-3 years (need to build payments company)
-
----
-
 ## Success Metrics
 
 ### North Star Metric
@@ -407,34 +377,12 @@ Only company with **all 4 pieces operational:**
 │  Latency: <1 sec from response → audio playback         │
 └──────────────────────────────────────────────────────────┘
 ```
-## Technical Architecture
-
-[User Phone] 
-    ↓ (Call)
-[Twilio Voice Gateway]
-    ↓
-[STT: Google Cloud Speech API]
-    ↓
-[NLU: BERT fine-tuned on 1K merchant queries]
-    ↓
-[Dialogue Manager: State machine (5 stages)]
-    ↓
-[Backend APIs]
-├── Paytm Merchant API (KYC, GSTIN)
-├── Paytm Credit API (balance check, disbursal)
-├── Paytm Travel API (flights, booking)
-├── GST Validation API (real-time GSTIN check)
-└── WhatsApp Business API (cards, PDF)
-    ↓
-[TTS: Google Cloud TTS]
-    ↓
-[User Hears Response]
 
 **Key Decisions:**
-- Why Google STT (not custom): Hindi+English code-switching out-of-box, 85% accuracy
-- Why BERT (not GPT): Lower latency (<500ms), fine-tunable on 1K examples
-- Why WhatsApp (not app): 95% merchant adoption, zero download friction
-- ----
+- **Google STT over custom:** Hindi+English code-switching out-of-box
+- **BERT over GPT:** Lower latency (<500ms), fine-tunable on 1K examples
+- **WhatsApp over dedicated app:** 95% merchant adoption, zero download friction
+- **Twilio voice gateway** fronts the stack; full call-path diagram in `03-ai-architecture/conversational-ai-stack.md`
 
 ### Fallback Architecture: When AI Fails
 
@@ -539,7 +487,7 @@ The repo is organized as a 0→1 product paper trail — from problem research t
 | `05-launch-plan/` | 4-week timeline + 20+ execution artifacts from kickoff through Go/No-Go | `README.md` |
 | `06-impact-projection/` | Business case, 3-year model, competitive moat, post-MVP roadmap | `business-case.md` |
 | `07-appendix/` | Travel-fintech fusion thesis, interview prep, references | `travel-fintech-fusion-thesis.md` |
-| `07-demo/` | Interactive D3 visualization of the 5-stage call flow + 18 failure modes | `call-flow-diagram.html` |
+| `08-demo/` | Interactive D3 visualization of the 5-stage call flow + 18 failure modes | `call-flow-diagram.html` |
 
 ### The Execution Paper Trail (`05-launch-plan/`)
 
@@ -569,56 +517,6 @@ See `05-launch-plan/README.md` for the full index.
 **If you have 90 minutes (full 0→1 narrative)** → Follow the folder numbers sequentially: 01 → 02 → 03 → 04 → 05 → 06.
 
 ---
-
-## Strategic Context
-
-### Why Paytm Can Win (Competitive Moat)
-- Only player with merchant KYC + credit + GST + travel in one stack
-- 30M existing relationships = zero CAC
-- Competitors (MMT, PhonePe) would need 2-3 years to replicate
-
-### Why Voice (Not Just GUI)
-- Target users: Low digital literacy merchants in Tier 2/3 cities
-- User research: 60% prefer speaking over app navigation for transactional tasks
-- Speed advantage: 3 min voice booking vs. 8-12 min app flow
-
-### Business Model
-- Primary: Credit activation (12% APR on ₹432 Cr disbursed = ₹4.3 Cr)
-- Secondary: Booking commission (2% of ₹1,440 Cr GMV = ₹29 Cr)
-- **This is a credit product, not a travel product**
-**TL;DR**
-
--Problem: 3M traveling merchants juggle OTAs + manual GST + separate credit — 17 min per booking, 40% invoice errors
--Solution: Voice-first helpline where merchants call, book in <3 min, get auto-GST invoice, pay via Paytm Business Credit
--Moat: Only company with merchant KYC + credit + GST + travel in one stack — competitors need 3 years to replicate
--MVP: 500 merchants, 3 cities, 4 weeks. Target: 25% conversion, 40% credit attach, 50+ NPS
--Impact: ₹1,440 Cr GMV, ₹33 Cr revenue (Year 1). 600K new active credit users. Zero CAC.
-
----
-## Launch Plan
-
-### Phase 1: Internal Dogfooding (Week 1-2)
-- 20 Paytm employees book real trips
-- Goal: Find blocking bugs, refine Hindi prompts
-
-### Phase 2: Closed Pilot (Week 3-6)
-- 500 merchants: Kanpur (200), Surat (150), Jaipur (150)
-- Selection: 2+ trips/year, credit pre-approved, opted-in
-- **Success criteria:** 100+ bookings, 25% conversion, 50+ NPS
-
-### Phase 3: Go/No-Go (Week 7)
-- **GO if:** Conversion >15%, credit attach >25%, NPS >40
-- **NO-GO if:** Conversion <10% → Ship GUI instead of voice
-
-### Phase 4: Scale (Week 8+)
-- 10K merchants, 15 cities
-- Add trains, multi-city (if data supports)
-
-### Merchant Discovery
-- In-app banner: "Book business travel via call: 1800-XXX"
-- WhatsApp broadcast to credit-eligible merchants
-- Proactive calls to merchants with seasonal travel patterns
-- -----
 
 ### Author's Note
 

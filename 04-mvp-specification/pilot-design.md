@@ -143,6 +143,51 @@
 
 ---
 
+## Credit-Isolation A/B Arm (Surat, 60 merchants)
+
+### Why This Exists
+
+The core product thesis is **credit activation** — but observed credit attach in an un-isolated pilot can't tell us whether the voice nudge *causes* activation or merely surfaces a pre-existing preference among merchants who already have (and use) Paytm Business Credit. Without isolation, a 40% attach result is ambiguous: it could mean "the product works" or "we recruited credit-friendly merchants." This arm removes that ambiguity for the single most important metric.
+
+### Design
+
+Two arms, stratified-randomized **within the Surat cohort** (150 merchants), drawn from the fabric, garment, and diamond segments so credit availability is roughly matched:
+
+| Arm | n | Stage 3 payment prompt | Everything else |
+|---|---|---|---|
+| **A — Nudge (control group for the product as pitched)** | 30 | *"Credit se karein ya wallet se?"* (explicit credit-first framing) | Standard 5-stage flow |
+| **B — Neutral** | 30 | *"Payment kaise karna hai?"* (merchant volunteers method) | Standard 5-stage flow |
+
+Arms are assigned at onboarding; merchants and human handoff agents are blind to arm. All other Surat merchants (90) remain on the standard flow and are excluded from A/B analysis.
+
+### Primary Measurement
+
+| Metric | Arm A target | Arm B expected | Decision |
+|---|---|---|---|
+| **Credit attach rate** | ≥ 45% | Unknown (the point of the test) | **See decision rule below** |
+
+### Decision Rule
+
+- **Arm A − Arm B ≥ 10 pp** → Voice nudge causally activates credit. Ship the nudge. Credit thesis validated.
+- **Arm A − Arm B between 5–10 pp** → Partial causal effect. Expand to a 200-merchant A/B in Phase 2 scale-up (Weeks 8–12) before claiming credit activation.
+- **Arm A − Arm B < 5 pp** → Attach is driven by merchant preference, not the nudge. **Credit-activation thesis does not hold.** Reframe the product narrative (likely toward GST-invoice-as-hero) and rebuild the business case accordingly.
+
+### Why Surat (Not Full-Cohort Randomization)
+
+Credit *availability* varies sharply across the three cities (Kanpur low, Surat high, Jaipur mixed). Randomizing across cities would confound the nudge effect with availability. Running the A/B inside Surat — where nearly all merchants have meaningful credit limits — isolates *willingness to use credit for travel* from *ability to use credit for travel*.
+
+### Power and Caveats
+
+- **n=30/30 is directional, not statistically powered.** At an assumed baseline of 40%, a 10 pp delta is detectable with ~70% power — good enough to make a Phase 2 go/no-go call, not good enough to publish. The memo must report as "directional signal, confirmed in Phase 2 scale-up."
+- **No third arm removing the nudge entirely** (e.g., merchant selects payment silently on WA). That is intentionally deferred to Phase 2 — the MVP test is nudge-vs-neutral, not nudge-vs-silent.
+- **Confound to monitor:** If Arm B merchants disproportionately ask *"credit chalega?"* unprompted, the "neutral" arm isn't really neutral — it just delays the nudge by one turn. Call reviewer flags any such utterance; if > 20% of Arm B calls contain merchant-initiated credit mention, the test is inconclusive.
+
+### Gate
+
+This A/B reports out at **Week 4 data lock**, and its result is an explicit input to `05-launch-plan/week-7-go-no-go-memo.md`. A <5 pp delta is a **Conditional-NO-GO on the credit-activation positioning** even if other metrics clear their gates.
+
+---
+
 ## Pilot Merchant Onboarding Process
 
 ### Step 1: CRM Selection (Week −3)

@@ -339,38 +339,52 @@ EBITDA Margin                  8.1%         39.2%         55.8%
 
 ---
 
-## Section 7: Sensitivity Analysis
+## Section 7: Sensitivity Analysis (One-Page)
 
-### What Breaks the Model
+### How to Read This Page
+Base case Year 1 revenue is **₹26.9 Cr** built on six stacked assumptions. This page names each lever, ranks them by impact, shows realistic compound downsides, and calls out the three inputs most likely to break the plan — so the board (not just the model) sees the real shape of the risk.
 
-| Variable | Base Case | Bear Case | Impact on Year 1 Revenue |
+### Assumption Quality — Where Each Base-Case Number Comes From
+| Driver | Base | Source | Evidence quality |
 |---|---|---|---|
-| Credit attach rate | 40% | 25% | −₹3.2 Cr (−12%) |
-| Avg booking value | ₹8,000 | ₹6,500 | −₹3.7 Cr (−14%) |
-| Merchant adoption | 600K | 400K | −₹9.1 Cr (−33%) |
-| Commission rate | 2.0% | 1.5% | −₹3.6 Cr (−13%) |
-| Repayment rate | 97% | 90% | −₹0.9 Cr credit NII (−3%) |
+| % of 3M SAM who travel ≥2×/year | 10% | §1 (NSSO extrapolation) | **LOW** — not Paytm-specific, not measured |
+| Year 1 adoption of SAM | 20% (600K) | §2 | Medium — B2B fintech analogue |
+| Trips per active merchant/yr | 3 | §2 | Medium — 20-interview self-report |
+| Avg booking value | ₹8,000 | §2 | High — Paytm Travel historical |
+| Credit attach (any payment) | 40% | North Star | Medium — pilot hit 41% but only ~31% was *new* activation |
+| Commission rate | 2.0% | Industry | High |
 
-### What Accelerates the Model
+### Tornado — One-Way Impact on Year 1 Revenue (ranked by |Δ|)
 
-| Variable | Base Case | Bull Case | Impact on Year 1 Revenue |
-|---|---|---|---|
-| Credit attach rate | 40% | 55% | +₹4.4 Cr (+16%) |
-| Avg booking value | ₹8,000 | ₹10,000 | +₹6.8 Cr (+25%) |
-| Merchant adoption | 600K | 900K | +₹13.6 Cr (+50%) |
-| Repeat booking rate | 3×/yr | 4×/yr | +₹9.1 Cr (+33%) |
+| Variable | Downside move | −₹ Cr | Upside move | +₹ Cr |
+|---|---|---|---|---|
+| Active merchants | 600K → 300K | **−13.5** | 600K → 900K | **+13.5** |
+| Repeat bookings/yr | 3× → 2× | **−9.0** | 3× → 4× | **+9.0** |
+| Avg booking value | ₹8K → ₹6.5K | −3.7 | ₹8K → ₹10K | +6.8 |
+| Commission rate | 2.0% → 1.5% | −3.6 | 2.0% → 2.5% | +3.6 |
+| Credit attach rate | 40% → 25% | −3.2 | 40% → 55% | +4.4 |
+| Credit repayment | 97% → 90% | −0.9 | 97% → 99% | +0.3 |
 
-### Critical Threshold Analysis
+*Adoption and repeat-booking dominate; credit attach is a distant fourth. The credit-activation narrative earns headline attention — the top-line risk is whether 600K merchants ever call.*
 
-```
-Minimum viable metrics to break even in Year 1:
-  Active merchants ≥ 300K    (50% of base case)
-  Credit attach rate ≥ 30%   (75% of base case)
-  Avg booking value ≥ ₹6,500 (81% of base case)
+### Compound Scenarios (What Actually Happens in Real Launches)
 
-→ Even in a significant bear case, the product reaches breakeven
-  before the end of Year 1. The zero-CAC structure makes this resilient.
-```
+| Scenario | Adoption | Attach | Repeat | BV | Year 1 rev | vs. base |
+|---|---|---|---|---|---|---|
+| **Base** | 600K | 40% | 3× | ₹8K | **₹26.9 Cr** | — |
+| "Pilot over-indexed" — hand-picked cohort regresses to mean | 400K | 30% | 2.5× | ₹7.5K | **~₹10 Cr** | −63% |
+| "Voice doesn't land" — mass-market prefers WA form | 600K | 30% | 2.5× | ₹7.5K | **~₹14 Cr** | −48% |
+| "TAM halves" — real travel rate is 5%, not 10% | 300K | 40% | 3× | ₹8K | **~₹13.5 Cr** | −50% |
+
+### Breakeven Floor
+
+OpEx ≈ ₹16 Cr/yr (§2). **Any single scenario above stays revenue-positive** vs. OpEx. Two of them compounding (e.g., TAM halves *and* attach slips) produces a **~₹4–7 Cr Year 1 loss.** The "breakeven even in bear case" claim holds only if levers move independently — and in practice they don't.
+
+### The Three Inputs Most Likely to Break the Model — Watch List
+
+1. **% of TAM who actually travel.** Extrapolated from NSSO; never measured. Pilot screens for ≥ 2 trips/year so pilot data *cannot* validate this. **First real read: Phase 2 open-cohort scale-up, Weeks 8–12.** If it's 5% not 10%, every revenue row halves.
+2. **First-time credit activation vs. total credit attach.** Pilot showed 41% attach but only ~31% was net-new. If "zero-CAC activation" is really 31% not 40%, credit NII drops ~25% and the **₹480 Cr CAC-equivalence claim in §4 needs a ~25% haircut.**
+3. **Voice vs. GUI causal contribution.** The model charges no premium for voice specifically. The credit-isolation A/B in `04-mvp-specification/pilot-design.md` is the canonical test — do not cite the AI stack as a moat in §8 until it reports out.
 
 ---
 

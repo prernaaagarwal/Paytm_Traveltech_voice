@@ -16,7 +16,7 @@ build, test, or deploy.
 | `05-launch-plan/` | 23 execution artifacts — kickoff, load test, dogfood, go-live gates, legal/compliance, ops dashboard, training curriculum, week-1 exit, week-7 go/no-go, retrospective |
 | `06-impact-projection/` | Business case, 3-year financial model, competitive moat, post-MVP roadmap |
 | `07-appendix/` | Travel-fintech fusion thesis, interview prep, references |
-| `07-demo/` | **Interactive D3 visualization** of the 5-stage call flow + 18 failure modes (`call-flow-diagram.html`) |
+| `08-demo/` | **Interactive D3 visualization** of the 5-stage call flow + 18 failure modes (`call-flow-diagram.html`) |
 
 ## Read First (if a new session)
 
@@ -43,7 +43,7 @@ build, test, or deploy.
 
 ## The Interactive Demo
 
-`07-demo/call-flow-diagram.html` is a self-contained single-file D3.js v7
+`08-demo/call-flow-diagram.html` is a self-contained single-file D3.js v7
 visualization. To view it: open the file in any modern browser directly from
 disk — no build step, no server. It shows all 5 stages with 18 failure modes
 branching off and a clickable recovery-cascade panel per failure.
